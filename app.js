@@ -83,7 +83,7 @@ let filterAgency = "ALL";
 // AI State
 let LAW_DATABASE = "";
 let uploadedLawFilesCount = 0;
-let geminiApiKey = "AIzaSyCFz2DVzI_j4TbKvCw2Uwk5gSx3wjMuZ2U"; // Default hardcoded API key
+let geminiApiKey = ""; // Nhập API Key qua giao diện web
 let geminiModelName = "gemini-2.5-flash";
 let isLoadingAI = null; // Track which step is currently loading
 
