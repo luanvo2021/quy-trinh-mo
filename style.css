@@ -19,6 +19,12 @@ body {
     color: var(--navy-blue) !important;
 }
 
+/* AI Config Section */
+.ai-config-section {
+    border-left: 4px solid #0d6efd;
+    background-color: #f8fbff !important;
+}
+
 /* Filter Section */
 .filter-section {
     border-left: 4px solid var(--navy-blue);
@@ -42,7 +48,8 @@ body {
     background: #f1f3f5;
 }
 
-.step-card.locked .card-body {
+.step-card.locked .card-body,
+.step-card.locked .ai-extract-area {
     pointer-events: none;
 }
 
@@ -83,6 +90,14 @@ body {
     font-weight: 600;
 }
 
+.step-desc {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 4px;
+    margin-bottom: 0;
+    font-weight: normal;
+}
+
 .step-status {
     font-weight: 600;
     font-size: 0.9rem;
@@ -94,6 +109,14 @@ body {
 .step-status.locked { color: #6c757d; }
 .step-status.active { color: var(--navy-blue); }
 .step-status.completed { color: var(--success-green); }
+
+/* AI Extract Area */
+.ai-extract-area {
+    padding: 15px 20px;
+    background-color: #f1f8ff;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: center;
+}
 
 /* Checklist Items */
 .checklist-item {
