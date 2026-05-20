@@ -6,7 +6,7 @@ const defaultSteps = [
         "checklist": [
             {
                 "doc_name": "Tờ trình đề nghị chấp thuận chủ trương đầu tư",
-                "responsible": "Công ty",
+                "responsible": "Thuận Phong",
                 "agency": "UBND Tỉnh",
                 "legal": "Khoản 1a Điều 55 Luật Địa chất & Khoáng sản 2025",
                 "guide": "Nộp tại Bộ phận một cửa của UBND tỉnh. Thời gian xử lý: 25 ngày làm việc."
@@ -26,7 +26,7 @@ const defaultSteps = [
         "checklist": [
             {
                 "doc_name": "Đơn đề nghị cấp Giấy phép thăm dò khoáng sản",
-                "responsible": "Công ty",
+                "responsible": "Thuận Phong",
                 "agency": "Sở Nông nghiệp và Môi trường",
                 "legal": "Khoản 1a Điều 55 Luật ĐCKS 2025",
                 "guide": "Sử dụng Mẫu số 01 kèm theo Nghị định 66."
@@ -70,7 +70,7 @@ const selFilterAgency = document.getElementById('filter-agency');
 function init() {
     loadData();
     loadProgress();
-    populateAgencyFilter();
+    populateFilters();
     setupEventListeners();
     render();
 }
@@ -105,23 +105,33 @@ function saveProgress() {
     localStorage.setItem('checklistProgress', JSON.stringify(userProgress));
 }
 
-function populateAgencyFilter() {
+function populateFilters() {
     const agencies = new Set();
+    const responsibles = new Set();
+    
     stepsData.forEach(step => {
         step.checklist.forEach(item => {
             if (item.agency) agencies.add(item.agency.trim());
+            if (item.responsible) responsibles.add(item.responsible.trim());
         });
     });
     
-    // Clear existing options except ALL
+    // Populate Agency Filter
     selFilterAgency.innerHTML = '<option value="ALL">-- Tất cả cơ quan tiếp nhận --</option>';
-    
-    // Sort and add new options
     Array.from(agencies).sort().forEach(agency => {
         const option = document.createElement('option');
         option.value = agency;
         option.textContent = agency;
         selFilterAgency.appendChild(option);
+    });
+    
+    // Populate Responsible Filter
+    selFilterResponsible.innerHTML = '<option value="ALL">-- Tất cả bên chịu trách nhiệm --</option>';
+    Array.from(responsibles).sort().forEach(resp => {
+        const option = document.createElement('option');
+        option.value = resp;
+        option.textContent = resp;
+        selFilterResponsible.appendChild(option);
     });
 }
 
@@ -148,7 +158,7 @@ function setupEventListeners() {
                     localStorage.setItem('checklistData', JSON.stringify(stepsData));
                     userProgress = {};
                     saveProgress();
-                    populateAgencyFilter();
+                    populateFilters();
                     // Reset filters
                     filterResponsible = "ALL";
                     filterAgency = "ALL";
@@ -192,10 +202,15 @@ function setupEventListeners() {
 function getResponsibleBadgeClass(role) {
     if (!role) return 'bg-secondary text-white';
     const lowerRole = role.toLowerCase();
-    if (lowerRole.includes('công ty')) return 'badge-company';
-    if (lowerRole.includes('chủ đầu tư')) return 'badge-investor';
+    if (lowerRole.includes('công ty') || lowerRole.includes('thuận phong')) return 'badge-company';
+    if (lowerRole.includes('chủ đầu tư') || lowerRole.includes('đối tác')) return 'badge-investor';
     if (lowerRole.includes('phối hợp')) return 'badge-coord';
-    return 'bg-secondary text-white';
+    
+    // Dynamic fallback for unknown roles
+    const colors = ['badge-company', 'badge-investor', 'badge-coord', 'bg-info text-dark', 'bg-dark text-white'];
+    let hash = 0;
+    for (let i = 0; i < role.length; i++) hash = role.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
 }
 
 // --- RENDER LOGIC ---
@@ -302,10 +317,10 @@ function render() {
                         <label class="form-check-label w-100" for="${itemId}" style="cursor: pointer;">
                             <div class="item-title">${item.doc_name}</div>
                             <div class="item-meta">
-                                ${item.responsible ? `<span class="badge-custom ${respBadgeClass}"><i class="fa-solid fa-user-tie"></i> ${item.responsible}</span>` : ''}
-                                ${item.agency ? `<span class="badge-custom badge-agency"><i class="fa-solid fa-building-columns"></i> ${item.agency}</span>` : ''}
+                                ${item.responsible ? `<span class="badge-custom ${respBadgeClass}"><i class="fa-solid fa-user-tie"></i> Chủ trì: ${item.responsible}</span>` : ''}
+                                ${item.agency ? `<span class="badge-custom badge-agency"><i class="fa-solid fa-building-columns"></i> Nộp tại: ${item.agency}</span>` : ''}
                             </div>
-                            <div class="item-legal"><i class="fa-solid fa-scale-balanced text-secondary"></i> Căn cứ: ${item.legal}</div>
+                            <div class="item-legal"><i class="fa-solid fa-scale-balanced text-secondary"></i> Căn cứ pháp lý: ${item.legal}</div>
                         </label>
                         ${item.guide ? `
                             <button class="btn btn-outline-secondary btn-guidance mt-1" type="button" data-bs-toggle="collapse" data-bs-target="#guidance-${itemId}" aria-expanded="false" aria-controls="guidance-${itemId}">
