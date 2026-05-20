@@ -79,6 +79,7 @@ const selFilterAgency = document.getElementById('filter-agency');
 const inputApiKey = document.getElementById('gemini-api-key');
 const btnSaveKey = document.getElementById('btn-save-key');
 const btnUploadLaw = document.getElementById('btn-upload-law');
+const btnClearLaw = document.getElementById('btn-clear-law');
 const fileUploadLaw = document.getElementById('file-upload-law');
 const lawStatus = document.getElementById('law-status');
 
@@ -87,9 +88,23 @@ function init() {
     loadData();
     loadProgress();
     loadAiConfig();
+    loadLawDatabase();
     populateFilters();
     setupEventListeners();
     render();
+}
+
+function loadLawDatabase() {
+    const savedLawDb = localStorage.getItem('LAW_DATABASE');
+    const savedLawCount = localStorage.getItem('uploadedLawFilesCount');
+    if (savedLawDb) {
+        LAW_DATABASE = savedLawDb;
+        uploadedLawFilesCount = parseInt(savedLawCount, 10) || 0;
+        if (uploadedLawFilesCount > 0) {
+            lawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: ${uploadedLawFilesCount} file`;
+            lawStatus.classList.replace('bg-secondary', 'bg-success');
+        }
+    }
 }
 
 function loadAiConfig() {
@@ -280,7 +295,26 @@ function setupEventListeners() {
         lawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: ${uploadedLawFilesCount} file`;
         lawStatus.classList.replace('bg-secondary', 'bg-success');
         
+        try {
+            localStorage.setItem('LAW_DATABASE', LAW_DATABASE);
+            localStorage.setItem('uploadedLawFilesCount', uploadedLawFilesCount.toString());
+        } catch (err) {
+            alert("Cảnh báo: Kho luật của bạn quá lớn để lưu trữ tự động trên trình duyệt. Dữ liệu luật sẽ bị mất khi bạn tải lại trang (F5).");
+        }
+        
         fileUploadLaw.value = ''; // reset
+    });
+
+    btnClearLaw.addEventListener('click', () => {
+        if (confirm("Bạn có chắc chắn muốn xóa toàn bộ kho dữ liệu luật đã nạp không?")) {
+            LAW_DATABASE = "";
+            uploadedLawFilesCount = 0;
+            localStorage.removeItem('LAW_DATABASE');
+            localStorage.removeItem('uploadedLawFilesCount');
+            lawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: 0 file`;
+            lawStatus.classList.replace('bg-success', 'bg-secondary');
+            alert("Đã xóa dữ liệu luật thành công.");
+        }
     });
 
     // Delegate event for dynamic AI extract buttons
