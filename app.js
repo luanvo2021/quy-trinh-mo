@@ -105,6 +105,17 @@ function loadData() {
     if (savedData) {
         try {
             stepsData = JSON.parse(savedData);
+            // Tự động chuyển đổi tên cơ quan cũ nếu có trong localStorage
+            stepsData.forEach(step => {
+                if (step.checklist) {
+                    step.checklist.forEach(item => {
+                        if (item.agency) {
+                            item.agency = item.agency.replace(/TN&MT/g, "NN&MT");
+                            item.agency = item.agency.replace(/Tài nguyên và Môi trường/g, "Nông nghiệp và Môi trường");
+                        }
+                    });
+                }
+            });
         } catch(e) {
             stepsData = defaultSteps;
         }
@@ -180,6 +191,18 @@ function setupEventListeners() {
             try {
                 const newData = JSON.parse(event.target.result);
                 if (Array.isArray(newData)) {
+                    // Tự động chuyển đổi tên cơ quan cũ nếu có trong file upload
+                    newData.forEach(step => {
+                        if (step.checklist) {
+                            step.checklist.forEach(item => {
+                                if (item.agency) {
+                                    item.agency = item.agency.replace(/TN&MT/g, "NN&MT");
+                                    item.agency = item.agency.replace(/Tài nguyên và Môi trường/g, "Nông nghiệp và Môi trường");
+                                }
+                            });
+                        }
+                    });
+                    
                     stepsData = newData;
                     localStorage.setItem('checklistData', JSON.stringify(stepsData));
                     userProgress = {};
@@ -318,7 +341,7 @@ YÊU CẦU: Hãy quét toàn bộ kho văn bản pháp luật đầu vào, tìm 
   {
     "doc_name": "Tên văn bản/giấy tờ cụ thể cần chuẩn bị",
     "responsible": "Ghi rõ 'Thuận Phong' hoặc 'Chủ đầu tư' tùy thuộc vào tính chất hồ sơ quy định trong luật",
-    "agency": "Tên cơ quan tiếp nhận chính xác (Ví dụ: Sở Nông nghiệp và Môi trường, Sở Tài chính, UBND Tỉnh...)",
+    "agency": "Tên cơ quan tiếp nhận chính xác (Ví dụ: Sở NN&MT, Sở Nông nghiệp và Môi trường, Sở Tài chính, UBND Tỉnh...). Tuyệt đối không dùng tên cũ là Sở TN&MT hay Sở Tài nguyên và Môi trường.",
     "legal": "Điều mấy, khoản mấy, thuộc văn bản luật nào quy định giấy tờ này",
     "guide": "Nội dung công việc cần làm là gì, quy trình thực hiện, thời gian giải quyết bao nhiêu ngày, các lưu ý quan trọng."
   }
