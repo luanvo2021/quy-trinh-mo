@@ -82,7 +82,7 @@ let filterAgency = "ALL";
 // AI State
 let LAW_DATABASE = "";
 let uploadedLawFilesCount = 0;
-let geminiApiKey = "";
+let geminiApiKey = "AIzaSyCFz2DVzI_j4TbKvCw2Uwk5gSx3wjMuZ2U"; // Default hardcoded API key
 let isLoadingAI = null; // Track which step is currently loading
 
 // --- DOM ELEMENTS ---
@@ -180,6 +180,8 @@ function loadAiConfig() {
     if (savedKey) {
         geminiApiKey = savedKey;
         inputApiKey.value = savedKey;
+    } else {
+        inputApiKey.value = geminiApiKey; // Show default hardcoded key
     }
 }
 
