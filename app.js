@@ -370,6 +370,44 @@ function getResponsibleBadgeClass(role) {
     return colors[Math.abs(hash) % colors.length];
 }
 
+// --- RAG RETRIEVAL LOGIC ---
+function retrieveRelevantContext(query, text, maxChars = 150000) {
+    if (text.length <= maxChars) return text;
+    
+    // Trích xuất từ khóa từ query (hỗ trợ tiếng Việt)
+    const normalizedQuery = query.toLowerCase().replace(/[^a-z0-9áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]/g, ' ');
+    const keywords = normalizedQuery.split(' ').filter(k => k.length > 2);
+    
+    // Chia nhỏ văn bản (theo Điều luật hoặc theo đoạn văn)
+    let chunks = text.split(/(?=\n\nĐiều \d+\.)/gi);
+    if (chunks.length < 10) {
+        chunks = text.split(/\n\n/);
+    }
+    
+    // Chấm điểm từng đoạn văn bản
+    const scoredChunks = chunks.map(chunk => {
+        let score = 0;
+        const chunkLower = chunk.toLowerCase();
+        keywords.forEach(kw => {
+            if (chunkLower.includes(kw)) score++;
+        });
+        return { chunk, score };
+    });
+    
+    // Sắp xếp các đoạn có điểm cao (chứa nhiều từ khóa liên quan) lên đầu
+    scoredChunks.sort((a, b) => b.score - a.score);
+    
+    // Gom các đoạn lại cho đến khi đạt giới hạn ký tự (maxChars)
+    let result = "";
+    for (const item of scoredChunks) {
+        if (item.score > 0 || result.length < 20000) {
+            if (result.length + item.chunk.length > maxChars) break;
+            result += item.chunk + "\n\n";
+        }
+    }
+    return result || text.substring(0, maxChars);
+}
+
 // --- AI LOGIC ---
 async function extractChecklistWithAI(stepId) {
     if (!geminiApiKey) {
@@ -391,12 +429,16 @@ async function extractChecklistWithAI(stepId) {
 
     try {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        // RAG: Trích lọc phần luật liên quan thay vì nhét toàn bộ kho luật khổng lồ
+        const query = stepData.step_name + " " + (stepData.step_description || "");
+        const relevantLawContext = retrieveRelevantContext(query, LAW_DATABASE, 120000); // ~30k tokens
         
         const prompt = `MỤC TIÊU: Bạn là một trợ lý pháp lý chuyên nghiệp về ngành địa chất, khoáng sản, thủy lợi tại Việt Nam.
 NGỮ CẢNH DỰ ÁN: Dự án hiện tại đang ở giai đoạn: ${stepData.step_name} với mô tả: ${stepData.step_description || "Không có"}.
-KHO VĂN BẢN PHÁP LUẬT ĐẦU VÀO:
-${LAW_DATABASE}
+KHO VĂN BẢN PHÁP LUẬT ĐẦU VÀO (Đã được trích lọc phần nội dung liên quan nhất):
+${relevantLawContext}
 
 YÊU CẦU: Hãy quét toàn bộ kho văn bản pháp luật đầu vào, tìm và trích xuất tất cả các quy định liên quan đến giai đoạn này để trả về một danh sách Checklist hồ sơ dưới dạng định dạng JSON chuẩn xác theo cấu trúc sau (và tuyệt đối không trả lời thêm chữ nào ngoài JSON):
 [
