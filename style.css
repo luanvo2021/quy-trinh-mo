@@ -243,3 +243,35 @@ body {
     background-color: var(--success-green);
     border-color: var(--success-green);
 }
+
+/* Add Item Row */
+.add-item-row {
+    border-top: 1px dashed #dee2e6;
+    background: #f8f9fa;
+}
+
+.btn-add-item {
+    color: #0d6efd;
+    background: transparent;
+    border: 1px dashed #0d6efd;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    transition: all 0.2s;
+}
+
+.btn-add-item:hover {
+    background: #e8f0fe;
+    border-style: solid;
+}
+
+.btn-delete-item {
+    flex-shrink: 0;
+    background: transparent !important;
+    line-height: 1;
+}
+
+.btn-delete-item:hover {
+    opacity: 1 !important;
+    color: #dc3545 !important;
+}

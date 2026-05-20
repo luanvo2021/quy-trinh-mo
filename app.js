@@ -667,6 +667,10 @@ function render() {
                                 </div>
                             ` : ''}
                         </div>
+                        ${isUnlocked ? `
+                        <button class="btn btn-sm btn-delete-item text-danger border-0 ps-2" title="Xóa mục này" data-step-id="${step.step_id}" data-item-index="${itemIndex}" style="opacity:0.4; transition:opacity 0.2s; align-self:flex-start; margin-top:2px;">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>` : ''}
                     </div>
                 `;
                 
@@ -697,8 +701,48 @@ function render() {
                     }
                 });
 
+                // Hover effect for delete button
+                const delBtn = itemDiv.querySelector('.btn-delete-item');
+                if (delBtn) {
+                    itemDiv.addEventListener('mouseenter', () => delBtn.style.opacity = '1');
+                    itemDiv.addEventListener('mouseleave', () => delBtn.style.opacity = '0.4');
+                    delBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const sId = parseInt(e.currentTarget.dataset.stepId);
+                        const iIdx = parseInt(e.currentTarget.dataset.itemIndex);
+                        if (confirm(`Xóa mục này khỏi danh sách?\n"${step.checklist[iIdx]?.doc_name}"`)) {
+                            const targetStep = stepsData.find(s => s.step_id === sId);
+                            if (targetStep) {
+                                // Also clear progress for items that shift index
+                                Object.keys(userProgress).forEach(key => {
+                                    if (key.startsWith(`s${sId}-`)) delete userProgress[key];
+                                });
+                                targetStep.checklist.splice(iIdx, 1);
+                                saveStepsData();
+                                saveProgress();
+                                render();
+                            }
+                        }
+                    });
+                }
+
                 body.appendChild(itemDiv);
             });
+        }
+
+        // --- ADD ITEM BUTTON ---
+        if (isUnlocked) {
+            const addRow = document.createElement('div');
+            addRow.className = 'add-item-row p-2 px-3';
+            addRow.innerHTML = `
+                <button class="btn btn-sm btn-add-item w-100" data-step-id="${step.step_id}">
+                    <i class="fa-solid fa-plus me-1"></i> Thêm mục hồ sơ mới
+                </button>
+            `;
+            addRow.querySelector('.btn-add-item').addEventListener('click', () => {
+                showAddItemModal(step.step_id);
+            });
+            body.appendChild(addRow);
         }
         
         card.appendChild(body);
@@ -730,3 +774,83 @@ function render() {
 
 // Start app
 document.addEventListener('DOMContentLoaded', init);
+
+// --- ADD ITEM MODAL ---
+function showAddItemModal(stepId) {
+    // Remove existing modal if any
+    const existing = document.getElementById('add-item-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'add-item-modal';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center; padding: 1rem;
+    `;
+    modal.innerHTML = `
+        <div style="background:#fff; border-radius:16px; padding:2rem; width:100%; max-width:560px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <h5 class="fw-bold mb-4" style="color:#1a3a5c;"><i class="fa-solid fa-plus-circle me-2 text-primary"></i>Thêm mục hồ sơ mới</h5>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Tên hồ sơ / Giấy tờ <span class="text-danger">*</span></label>
+                <input type="text" id="add-doc-name" class="form-control" placeholder="VD: Đơn xin cấp phép khai thác khoáng sản">
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="form-label fw-semibold">Bên chịu trách nhiệm</label>
+                    <input type="text" id="add-responsible" class="form-control" placeholder="VD: Thuận Phong">
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-semibold">Cơ quan tiếp nhận</label>
+                    <input type="text" id="add-agency" class="form-control" placeholder="VD: Sở NN&MT">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Căn cứ pháp lý</label>
+                <input type="text" id="add-legal" class="form-control" placeholder="VD: Điều 5, Luật Khoáng sản 2010">
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Hướng dẫn / Lưu ý</label>
+                <textarea id="add-guide" class="form-control" rows="3" placeholder="Mô tả nội dung cần làm, thời gian giải quyết, lưu ý..."></textarea>
+            </div>
+            <div class="d-flex gap-2 justify-content-end">
+                <button id="btn-cancel-add" class="btn btn-outline-secondary">Hủy</button>
+                <button id="btn-confirm-add" class="btn btn-primary px-4"><i class="fa-solid fa-floppy-disk me-1"></i>Lưu mục mới</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Focus first field
+    setTimeout(() => document.getElementById('add-doc-name').focus(), 100);
+
+    // Cancel
+    document.getElementById('btn-cancel-add').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    // Confirm
+    document.getElementById('btn-confirm-add').addEventListener('click', () => {
+        const docName = document.getElementById('add-doc-name').value.trim();
+        if (!docName) {
+            document.getElementById('add-doc-name').classList.add('is-invalid');
+            return;
+        }
+        const newItem = {
+            doc_name: docName,
+            responsible: document.getElementById('add-responsible').value.trim() || '',
+            agency: document.getElementById('add-agency').value.trim() || '',
+            legal: document.getElementById('add-legal').value.trim() || '',
+            guide: document.getElementById('add-guide').value.trim() || '',
+        };
+        const targetStep = stepsData.find(s => s.step_id === stepId);
+        if (targetStep) {
+            targetStep.checklist.push(newItem);
+            saveStepsData();
+            populateFilters();
+            render();
+        }
+        modal.remove();
+    });
+}
+
