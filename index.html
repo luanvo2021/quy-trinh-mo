@@ -73,10 +73,17 @@
                             <h5 class="text-primary fw-bold m-0"><i class="fa-solid fa-robot me-2"></i> Trợ lý AI Trích xuất Luật</h5>
                         </div>
                         <div class="col-md-5 mb-2 mb-md-0">
-                            <div class="input-group input-group-sm">
+                            <div class="input-group input-group-sm mb-1">
                                 <span class="input-group-text bg-light"><i class="fa-solid fa-key"></i></span>
                                 <input type="password" id="gemini-api-key" class="form-control" placeholder="Nhập Google Gemini API Key...">
                                 <button class="btn btn-outline-primary" type="button" id="btn-save-key">Lưu</button>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-microchip"></i></span>
+                                <select id="gemini-model-select" class="form-select">
+                                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (Nhanh)</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Ổn định/Chuyên sâu)</option>
+                                </select>
                             </div>
                             <small class="text-muted" style="font-size: 0.75rem;">(Lưu cục bộ trên trình duyệt)</small>
                         </div>

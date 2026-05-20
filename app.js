@@ -83,6 +83,7 @@ let filterAgency = "ALL";
 let LAW_DATABASE = "";
 let uploadedLawFilesCount = 0;
 let geminiApiKey = "AIzaSyCFz2DVzI_j4TbKvCw2Uwk5gSx3wjMuZ2U"; // Default hardcoded API key
+let geminiModelName = "gemini-2.5-flash";
 let isLoadingAI = null; // Track which step is currently loading
 
 // --- DOM ELEMENTS ---
@@ -97,6 +98,7 @@ const selFilterAgency = document.getElementById('filter-agency');
 
 // AI DOM Elements
 const inputApiKey = document.getElementById('gemini-api-key');
+const selGeminiModel = document.getElementById('gemini-model-select');
 const btnSaveKey = document.getElementById('btn-save-key');
 const btnUploadLaw = document.getElementById('btn-upload-law');
 const btnClearLaw = document.getElementById('btn-clear-law');
@@ -182,6 +184,12 @@ function loadAiConfig() {
         inputApiKey.value = savedKey;
     } else {
         inputApiKey.value = geminiApiKey; // Show default hardcoded key
+    }
+    
+    const savedModel = localStorage.getItem('geminiModelName');
+    if (savedModel) {
+        geminiModelName = savedModel;
+        selGeminiModel.value = savedModel;
     }
 }
 
@@ -288,6 +296,11 @@ function setupEventListeners() {
     });
 
     // AI Events
+    selGeminiModel.addEventListener('change', (e) => {
+        geminiModelName = e.target.value;
+        localStorage.setItem('geminiModelName', geminiModelName);
+    });
+
     btnSaveKey.addEventListener('click', () => {
         const key = inputApiKey.value.trim();
         if (key) {
@@ -429,9 +442,7 @@ async function extractChecklistWithAI(stepId) {
 
     try {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
-        // RAG: Trích lọc phần luật liên quan thay vì nhét toàn bộ kho luật khổng lồ
         const query = stepData.step_name + " " + (stepData.step_description || "");
         const relevantLawContext = retrieveRelevantContext(query, LAW_DATABASE, 120000); // ~30k tokens
         
@@ -450,8 +461,23 @@ YÊU CẦU: Hãy quét toàn bộ kho văn bản pháp luật đầu vào, tìm 
     "guide": "Nội dung công việc cần làm là gì, quy trình thực hiện, thời gian giải quyết bao nhiêu ngày, các lưu ý quan trọng."
   }
 ]`;
+
+        let result;
+        try {
+            const primaryModel = genAI.getGenerativeModel({ model: geminiModelName });
+            result = await primaryModel.generateContent(prompt);
+        } catch (apiError) {
+            console.warn("Lỗi gọi API Model chính:", apiError);
+            if (apiError.message && (apiError.message.includes('503') || apiError.message.includes('overloaded'))) {
+                console.log("Mô hình chính đang quá tải (503). Đang tự động chuyển sang mô hình dự phòng...");
+                const fallbackModelName = geminiModelName === "gemini-2.5-flash" ? "gemini-1.5-pro" : "gemini-2.5-flash";
+                const fallbackModel = genAI.getGenerativeModel({ model: fallbackModelName });
+                result = await fallbackModel.generateContent(prompt);
+            } else {
+                throw apiError;
+            }
+        }
         
-        const result = await model.generateContent(prompt);
         let text = result.response.text();
         
         // Clean JSON markdown blocks if any
