@@ -1,0 +1,189 @@
+:root {
+    --navy-blue: #0A2E5C;
+    --success-green: #198754;
+    --bg-light: #f8f9fa;
+    --border-color: #dee2e6;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+.bg-navy {
+    background-color: var(--navy-blue) !important;
+}
+
+.text-navy {
+    color: var(--navy-blue) !important;
+}
+
+/* Step Card Styles */
+.step-card {
+    background: #fff;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.step-card.locked {
+    opacity: 0.6;
+    border-color: #e9ecef;
+    background: #f1f3f5;
+}
+
+.step-card.locked .card-body {
+    pointer-events: none;
+}
+
+.step-card.active {
+    border-color: var(--navy-blue);
+    box-shadow: 0 8px 15px rgba(10, 46, 92, 0.15);
+    transform: translateY(-2px);
+}
+
+.step-card.completed {
+    border-color: var(--success-green);
+    box-shadow: 0 4px 10px rgba(25, 135, 84, 0.1);
+}
+
+/* Step Header */
+.step-header {
+    padding: 16px 20px;
+    background: rgba(0,0,0,0.02);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.step-card.completed .step-header {
+    background: rgba(25, 135, 84, 0.05);
+    border-bottom-color: var(--success-green);
+}
+
+.step-card.active .step-header {
+    background: rgba(10, 46, 92, 0.05);
+    border-bottom-color: var(--navy-blue);
+}
+
+.step-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.step-status {
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.step-status.locked { color: #6c757d; }
+.step-status.active { color: var(--navy-blue); }
+.step-status.completed { color: var(--success-green); }
+
+/* Checklist Items */
+.checklist-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f3f5;
+    transition: background-color 0.2s;
+}
+
+.checklist-item:last-child {
+    border-bottom: none;
+}
+
+.checklist-item:hover {
+    background-color: #f8f9fa;
+}
+
+.checklist-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-top: 4px;
+    cursor: pointer;
+}
+
+.checklist-item.checked .item-title {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.item-title {
+    font-weight: 500;
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+    transition: color 0.2s;
+}
+
+.item-legal {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-style: italic;
+    margin-bottom: 8px;
+}
+
+.btn-guidance {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.guidance-content {
+    background-color: #f8f9fa;
+    border-left: 3px solid var(--navy-blue);
+    padding: 10px 15px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Lock Overlay for aesthetic */
+.lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+    backdrop-filter: blur(1px);
+}
+
+.step-card.locked .lock-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+.lock-icon {
+    font-size: 3rem;
+    color: #495057;
+    background: white;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Switch customization */
+.form-switch .form-check-input:checked {
+    background-color: var(--success-green);
+    border-color: var(--success-green);
+}
