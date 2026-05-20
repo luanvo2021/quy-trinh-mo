@@ -429,7 +429,7 @@ async function extractChecklistWithAI(stepId) {
 
     try {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
         // RAG: Trích lọc phần luật liên quan thay vì nhét toàn bộ kho luật khổng lồ
         const query = stepData.step_name + " " + (stepData.step_description || "");
