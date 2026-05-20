@@ -19,6 +19,11 @@ body {
     color: var(--navy-blue) !important;
 }
 
+/* Filter Section */
+.filter-section {
+    border-left: 4px solid var(--navy-blue);
+}
+
 /* Step Card Styles */
 .step-card {
     background: #fff;
@@ -118,17 +123,44 @@ body {
 }
 
 .item-title {
-    font-weight: 500;
+    font-weight: 600;
     font-size: 1.05rem;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     transition: color 0.2s;
 }
+
+.item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+/* Badges */
+.badge-custom {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-company { background-color: #ffc107; color: #000; }
+.badge-investor { background-color: #0d6efd; color: #fff; }
+.badge-coord { background-color: #fd7e14; color: #fff; }
+.badge-agency { background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;}
 
 .item-legal {
     font-size: 0.85rem;
     color: #6c757d;
     font-style: italic;
     margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .btn-guidance {
@@ -140,10 +172,11 @@ body {
 .guidance-content {
     background-color: #f8f9fa;
     border-left: 3px solid var(--navy-blue);
-    padding: 10px 15px;
+    padding: 12px 15px;
     margin-top: 10px;
     font-size: 0.9rem;
     border-radius: 0 4px 4px 0;
+    color: #495057;
 }
 
 /* Lock Overlay for aesthetic */

@@ -1,0 +1,248 @@
+[
+  {
+    "step_id": 1,
+    "step_name": "Bước 1: Lập Đề Án Thăm Dò & Công Nhận Trữ Lượng",
+    "checklist": [
+      {
+        "doc_name": "Đề Án Thăm Dò & Văn bản đề nghị cấp phép thăm dò khoáng sản",
+        "responsible": "Thuận Phong",
+        "agency": "Sở TN&MT",
+        "legal": "Điều 42 Luật Địa chất và Khoáng sản 2024, Thông tư 40/2025/TT-BNNMT",
+        "guide": "Nộp đề án lên Sở TN&MT. Cơ quan sẽ kiểm tra tính đầy đủ trong 5 ngày và thẩm định nội dung trong 20–30 ngày. Doanh nghiệp có 30 ngày để bổ sung nếu cần chỉnh sửa."
+      },
+      {
+        "doc_name": "Quyết định phê duyệt/Giấy phép thăm dò khoáng sản",
+        "responsible": "UBND Tỉnh",
+        "agency": "Thuận Phong",
+        "legal": "Luật Địa chất và Khoáng sản 2024",
+        "guide": "Ban hành trong vòng 15 ngày sau thẩm định. Cơ quan tiếp nhận thông báo kết quả cho tổ chức, cá nhân trong 2 ngày làm việc."
+      },
+      {
+        "doc_name": "Báo cáo kết quả thăm dò khoáng sản & Đơn đề nghị phê duyệt trữ lượng",
+        "responsible": "Thuận Phong",
+        "agency": "Sở TN&MT",
+        "legal": "Nghị định 193/2025/NĐ-CP",
+        "guide": "Thuê đơn vị địa chất đủ điều kiện thực hiện khoan lấy mẫu, đo địa vật lý trong thời hạn tối đa 24 tháng. Nộp hồ sơ xin công nhận kết quả lên Sở TN&MT (thẩm định tối đa 45 ngày)."
+      },
+      {
+        "doc_name": "Quyết định công nhận trữ lượng khoáng sản cát",
+        "responsible": "UBND Tỉnh",
+        "agency": "Thuận Phong",
+        "legal": "Luật Địa chất và Khoáng sản 2024",
+        "guide": "UBND tỉnh xem xét và ban hành quyết định công nhận trữ lượng khoáng sản trong Báo cáo khảo sát rà soát."
+      }
+    ]
+  },
+  {
+    "step_id": 2,
+    "step_name": "Bước 2: Lập Dự Án Đầu Tư & Thẩm Định BCKTKT",
+    "checklist": [
+      {
+        "doc_name": "Báo cáo Kinh tế Kỹ thuật (BCKTKT) + Thiết kế cơ sở công trình mỏ",
+        "responsible": "Thuận Phong",
+        "agency": "Sở Công thương",
+        "legal": "Luật Xây dựng số 62/2020/QH14, Luật ĐC&KS 2024, Luật Đầu tư 2020",
+        "guide": "Lập thiết kế cơ sở công trình khai thác mỏ lộ thiên, thuê tư vấn thẩm tra độc lập nếu cần và nộp hồ sơ đến Sở Công thương."
+      },
+      {
+        "doc_name": "Biên bản trao đổi & Văn bản ý kiến về Dự án đầu khai thác",
+        "responsible": "Sở Công thương",
+        "agency": "Thuận Phong",
+        "legal": "Luật Xây dựng",
+        "guide": "Sở Công thương tiếp nhận, kiểm tra hồ sơ, tổ chức hội đồng hướng dẫn thẩm định và ban hành văn bản ý kiến (đồng ý hoặc yêu cầu chỉnh sửa)."
+      },
+      {
+        "doc_name": "BCKTKT chính thức & Quyết định phê duyệt nội bộ",
+        "responsible": "Thuận Phong",
+        "agency": "Nội bộ công ty",
+        "legal": "Luật Doanh nghiệp / Luật Xây dựng",
+        "guide": "Chỉnh sửa, hoàn thiện BCKTKT theo ý kiến của Sở Công thương. Quyết định phê duyệt nội bộ do Tổng Giám đốc hoặc người đại diện pháp luật ký."
+      }
+    ]
+  },
+  {
+    "step_id": 3,
+    "step_name": "Bước 3: Lập Báo Cáo ĐTM & Đánh Giá Tác Động Lòng Bờ Sông",
+    "checklist": [
+      {
+        "doc_name": "Biên bản họp tham vấn cộng đồng dân cư & Văn bản đề nghị tham vấn",
+        "responsible": "Thuận Phong",
+        "agency": "UBND Xã & Ủy ban MTTQ Xã",
+        "legal": "Luật BVMT 2020 (sửa đổi bởi Luật số 146/2025/QH15)",
+        "guide": "Gửi văn bản tham vấn và tổ chức họp với cộng đồng dân cư chịu tác động trực tiếp tại địa phương."
+      },
+      {
+        "doc_name": "Văn bản ý kiến tham vấn pháp lý",
+        "responsible": "UBND Xã & Ủy ban MTTQ Xã",
+        "agency": "Thuận Phong",
+        "legal": "Nghị định 08/2022/NĐ-CP",
+        "guide": "Chính quyền cấp xã ban hành văn bản đóng góp ý kiến về quá trình đánh giá tác động môi trường của dự án."
+      },
+      {
+        "doc_name": "Báo cáo ĐTM hoàn chỉnh & Văn bản đề nghị thẩm định",
+        "responsible": "Thuận Phong",
+        "agency": "Sở TN&MT (Trung tâm PVHCC)",
+        "legal": "Thông tư 09/2026/TT-BNNMT",
+        "guide": "Lập báo cáo ĐTM gồm báo cáo chính + phụ lục và các văn bản tham vấn, nộp tại Trung tâm Phục vụ hành chính công tỉnh."
+      },
+      {
+        "doc_name": "Quyết định thành lập Hội đồng thẩm định Báo cáo ĐTM",
+        "responsible": "UBND Tỉnh",
+        "agency": "Sở TN&MT",
+        "legal": "Luật Bảo vệ Môi trường",
+        "guide": "Ban hành quyết định thành lập hội đồng dựa trên tờ trình đề xuất của Sở TN&MT."
+      },
+      {
+        "doc_name": "Biên bản họp Hội đồng thẩm định ĐTM",
+        "responsible": "Sở TN&MT",
+        "agency": "Thuận Phong",
+        "legal": "Luật Bảo vệ Môi trường",
+        "guide": "Tổ chức họp Hội đồng, kiểm tra chất lượng báo cáo và ghi rõ ý kiến từng thành viên. Có thể yêu cầu doanh nghiệp sửa đổi bổ sung."
+      },
+      {
+        "doc_name": "Quyết định phê duyệt kết quả thẩm định Báo cáo ĐTM",
+        "responsible": "UBND Tỉnh",
+        "agency": "Thuận Phong",
+        "legal": "Luật BVMT 2020",
+        "guide": "Doanh nghiệp nộp lại bản ĐTM cuối cùng đã chỉnh sửa để UBND tỉnh xem xét ký quyết định phê duyệt chính thức."
+      }
+    ]
+  },
+  {
+    "step_id": 4,
+    "step_name": "Bước 4: Cấp Quyết Định Chủ Trương Đầu Tư",
+    "checklist": [
+      {
+        "doc_name": "Hồ sơ đề nghị cấp Quyết định chủ trương đầu tư (Mẫu A.I.1, A.I.3, Cam kết tài chính)",
+        "responsible": "Thuận Phong",
+        "agency": "Sở Tài chính",
+        "legal": "Luật Đầu tư 2020, NĐ 193/2025/NĐ-CP",
+        "guide": "Nộp đề xuất dự án, cam kết thực hiện, xác nhận số dư tài khoản/bảo lãnh ngân hàng, đính kèm BCKTKT và Quyết định ĐTM đã duyệt."
+      },
+      {
+        "doc_name": "Biên bản họp góp ý & Tờ trình đề nghị ban hành chủ trương",
+        "responsible": "Sở Tài chính",
+        "agency": "UBND Tỉnh",
+        "legal": "Luật Đầu tư 2020",
+        "guide": "Tiếp nhận hồ sơ, thẩm định và tổ chức họp xin ý kiến phối hợp liên sở, ngành trước khi lập tờ trình trình lên UBND tỉnh."
+      },
+      {
+        "doc_name": "Quyết định chấp thuận chủ trương đầu tư đồng thời chấp thuận nhà đầu tư",
+        "responsible": "UBND Tỉnh",
+        "agency": "Thuận Phong",
+        "legal": "Luật Địa chất và Khoáng sản 2024",
+        "guide": "UBND tỉnh xem xét toàn diện dự án và ban hành quyết định chấp thuận chính thức cho doanh nghiệp."
+      }
+    ]
+  },
+  {
+    "step_id": 5,
+    "step_name": "Bước 5: Cấp Giấy Phép Khai Thác Khoáng Sản",
+    "checklist": [
+      {
+        "doc_name": "Bộ hồ sơ đề nghị cấp Giấy phép khai thác cát sông đầy đủ",
+        "responsible": "Thuận Phong",
+        "agency": "Sở TN&MT (Trung tâm PVHCC)",
+        "legal": "Luật Địa chất và Khoáng sản 2024",
+        "guide": "Nộp đơn đề nghị, bản đồ khu vực mỏ (tọa độ VN-2000), báo cáo trữ lượng, BCKTKT, ĐTM và quyết định chủ trương đầu tư."
+      },
+      {
+        "doc_name": "Biên bản kiểm tra thực địa & Phiếu xác định tiền cấp quyền",
+        "responsible": "Sở TN&MT",
+        "agency": "Thuận Phong",
+        "legal": "NĐ 193/2025/NĐ-CP, Nghị định 21/2026/NĐ-CP",
+        "guide": "Kiểm tra tính hợp lệ, tổ chức đo đạc thực địa xác định tọa độ ranh giới mỏ và tính toán tiền cấp quyền khoáng sản."
+      },
+      {
+        "doc_name": "Văn bản ý kiến phối hợp chuyên ngành (ĐTNĐ, PCTT, Thủy lợi, Tỉnh giáp ranh)",
+        "responsible": "Sở TN&MT",
+        "agency": "Các Cục/Sở/UBND liên quan",
+        "legal": "Luật Địa chất và Khoáng sản 2024",
+        "guide": "Lấy ý kiến Cục Đường thủy nội địa, Ban chỉ huy PCTT, Sở NN&PTNT, UBND tỉnh giáp ranh (nếu có sông ranh giới) và Ủy ban Sông Mê Công VN."
+      },
+      {
+        "doc_name": "Tờ trình UBND tỉnh & Dự thảo Giấy phép khai thác",
+        "responsible": "Sở TN&MT",
+        "agency": "UBND Tỉnh",
+        "legal": "Nghị định 193/2025/NĐ-CP",
+        "guide": "Tổng hợp tất cả ý kiến đóng góp, hoàn thiện hồ sơ thẩm định và lập tờ trình kèm dự thảo giấy phép."
+      },
+      {
+        "doc_name": "Giấy phép khai thác khoáng sản chính thức",
+        "responsible": "UBND Tỉnh",
+        "agency": "Thuận Phong",
+        "legal": "Luật Địa chất và Khoáng sản 2024",
+        "guide": "UBND tỉnh ký ban hành Giấy phép khai thác khoáng sản cho doanh nghiệp (Cấp số hiệu GP/UBND)."
+      }
+    ]
+  },
+  {
+    "step_id": 6,
+    "step_name": "Bước 6: Hoàn Thiện Thủ Tục Trước Khi Khai Thác",
+    "checklist": [
+      {
+        "doc_name": "Chứng từ nộp Tiền cấp quyền (Đợt 1) & Lệ phí cấp phép",
+        "responsible": "Thuận Phong",
+        "agency": "Cục Thuế / Kho bạc",
+        "legal": "NĐ 193/2025/NĐ-CP, Nghị định 21/2026/NĐ-CP",
+        "guide": "Nộp bản kê khai tiền cấp quyền, đóng tiền đợt 1 theo quyết định phê duyệt và đóng lệ phí cấp phép khai thác."
+      },
+      {
+        "doc_name": "Hợp đồng thuê đất mặt nước & Quyết định cho thuê mặt nước",
+        "responsible": "Thuận Phong & UBND Tỉnh",
+        "agency": "Cục Thuế Tỉnh",
+        "legal": "Luật Đất đai 2024, NĐ 102/2024/NĐ-CP, NĐ 291/2025/NĐ-CP",
+        "guide": "Phối hợp Văn phòng ĐKĐĐ đo đạc địa chính mặt nước. UBND tỉnh ký quyết định cho thuê, Cục Thuế thông báo đơn giá, hai bên ký Hợp đồng thuê mặt nước."
+      },
+      {
+        "doc_name": "Thiết kế khai thác mỏ chi tiết & Quyết định bổ nhiệm Giám đốc điều hành mỏ",
+        "responsible": "Thuận Phong",
+        "agency": "Sở TN&MT",
+        "legal": "NĐ 193/2025/NĐ-CP, Luật An toàn Vệ sinh Lao động",
+        "guide": "Lập thuyết minh + bản vẽ thiết kế mỏ chi tiết và phê duyệt nội bộ. Bổ nhiệm Giám đốc điều hành mỏ đáp ứng đúng tiêu chuẩn chuyên môn."
+      },
+      {
+        "doc_name": "Kế hoạch khai thác năm đầu tiên & Đăng ký phương tiện thiết bị",
+        "responsible": "Thuận Phong",
+        "agency": "Sở TN&MT",
+        "legal": "Thông tư 36/2025/TT-BNNMT",
+        "guide": "Lập kế hoạch khai thác sản lượng năm đầu, đăng ký danh sách phương tiện (tên, số đăng kiểm, công suất). Chờ Sở TN&MT gửi giấy xác nhận."
+      },
+      {
+        "doc_name": "Phương án đảm bảo ATGT đường thủy & Văn bản chấp thuận phương án",
+        "responsible": "Thuận Phong",
+        "agency": "Cục/Chi cục Đường thủy nội địa",
+        "legal": "Luật Giao thông ĐTNĐ",
+        "guide": "Lập phương án đảm bảo an toàn giao thông đường thủy trong quá trình khai thác, nộp đơn đề nghị chấp thuận đến cơ quan ĐTNĐ có thẩm quyền."
+      },
+      {
+        "doc_name": "Biên bản nghiệm thu và bàn giao mốc ranh giới tại thực địa",
+        "responsible": "Sở TN&MT",
+        "agency": "Thuận Phong & UBND Xã",
+        "legal": "Luật Địa chất và Khoáng sản 2024",
+        "guide": "Doanh nghiệp cắm mốc bờ, lắp biển báo, thả phao giới hạn theo phương án ATGT. Gửi văn bản đề nghị Sở TN&MT chủ trì xuống nghiệm thu bàn giao mốc thực địa."
+      },
+      {
+        "doc_name": "Hồ sơ lắp thiết bị giám sát hành trình (GPS/AIS) & Hợp đồng vận chuyển",
+        "responsible": "Thuận Phong",
+        "agency": "Sở TN&MT / Cơ quan quản lý",
+        "legal": "Quy định kiểm soát khai thác khoáng sản đặc thù",
+        "guide": "Lắp đặt thiết bị tự động ghi dữ liệu vị trí trên 100% phương tiện khai thác/vận chuyển. Ký hợp đồng với các chủ tàu đủ điều kiện nếu thuê ngoài."
+      },
+      {
+        "doc_name": "Văn bản kê khai giá cát tại mỏ & Thông báo thời điểm bắt đầu khai thác",
+        "responsible": "Thuận Phong",
+        "agency": "Sở Tài chính, Sở Xây dựng, Cơ quan ĐTNĐ",
+        "legal": "Luật Giá / Quy trình quản lý khoáng sản",
+        "guide": "Kê khai giá cát gửi Sở Tài chính xác nhận, xin hướng dẫn tính giá của Sở Xây dựng. Gửi thông báo ngày chạy mỏ đến Sở TN&MT và cơ quan ĐTNĐ."
+      },
+      {
+        "doc_name": "Thông báo hạn chế giao thông đường thủy nội địa",
+        "responsible": "Cục/Chi cục Đường thủy nội địa",
+        "agency": "Toàn bộ khu vực mỏ",
+        "legal": "Luật Giao thông Đường thủy nội địa",
+        "guide": "Cơ quan ĐTNĐ ban hành văn bản thông báo hạn chế giao thông tại khu vực mỏ. Đây là ĐIỀU KIỆN CUỐI CÙNG để mỏ chính thức hoạt động."
+      }
+    ]
+  }
+]

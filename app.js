@@ -1,62 +1,49 @@
 // --- INITIAL DATA (DUMMY DATA) ---
 const defaultSteps = [
     {
-        id: "step-1",
-        title: "Bước 1: Chấp thuận chủ trương đầu tư",
-        items: [
+        "step_id": 1,
+        "step_name": "Bước 1: Chấp thuận chủ trương đầu tư mỏ đặc thù",
+        "checklist": [
             {
-                id: "s1-i1",
-                name: "Tờ trình đề nghị chấp thuận chủ trương đầu tư",
-                legal: "Khoản 1 Điều 31 Luật Đầu tư",
-                guidance: "Cơ quan tiếp nhận: Sở Kế hoạch và Đầu tư.<br>Thời gian giải quyết: 35 ngày làm việc kể từ ngày nhận đủ hồ sơ hợp lệ."
+                "doc_name": "Tờ trình đề nghị chấp thuận chủ trương đầu tư",
+                "responsible": "Công ty",
+                "agency": "UBND Tỉnh",
+                "legal": "Khoản 1a Điều 55 Luật Địa chất & Khoáng sản 2025",
+                "guide": "Nộp tại Bộ phận một cửa của UBND tỉnh. Thời gian xử lý: 25 ngày làm việc."
             },
             {
-                id: "s1-i2",
-                name: "Đề xuất dự án đầu tư",
-                legal: "Khoản 1 Điều 33 Luật Đầu tư",
-                guidance: "Nội dung bao gồm: nhà đầu tư, mục tiêu, quy mô, vốn đầu tư, phương án huy động vốn, địa điểm, thời hạn, tiến độ, đánh giá tác động KT-XH."
+                "doc_name": "Hồ sơ năng lực tài chính và kinh nghiệm khai thác",
+                "responsible": "Chủ đầu tư",
+                "agency": "Sở Kế hoạch và Đầu tư",
+                "legal": "Luật Đầu tư công và Nghị định hướng dẫn liên quan",
+                "guide": "Cần chuẩn bị báo cáo tài chính 2 năm gần nhất có kiểm toán."
             }
         ]
     },
     {
-        id: "step-2",
-        title: "Bước 2: Cấp Giấy phép thăm dò khoáng sản",
-        items: [
+        "step_id": 2,
+        "step_name": "Bước 2: Cấp Giấy phép thăm dò khoáng sản",
+        "checklist": [
             {
-                id: "s2-i1",
-                name: "Đơn đề nghị cấp Giấy phép thăm dò khoáng sản",
-                legal: "Khoản 1a Điều 55 Luật ĐCKS 2025",
-                guidance: "Cơ quan tiếp nhận: Sở Tài nguyên và Môi trường (đối với VLXD thông thường).<br>Lưu ý: Mẫu đơn theo quy định tại Nghị định 66."
+                "doc_name": "Đơn đề nghị cấp Giấy phép thăm dò khoáng sản",
+                "responsible": "Công ty",
+                "agency": "Sở Tài nguyên và Môi trường",
+                "legal": "Khoản 1a Điều 55 Luật ĐCKS 2025",
+                "guide": "Sử dụng Mẫu số 01 kèm theo Nghị định 66."
             },
             {
-                id: "s2-i2",
-                name: "Đề án thăm dò khoáng sản",
-                legal: "Khoản 1b Điều 55 Luật ĐCKS 2025",
-                guidance: "Phải được lập bởi tổ chức, cá nhân có đủ điều kiện hành nghề thăm dò khoáng sản."
+                "doc_name": "Đề án thăm dò khoáng sản",
+                "responsible": "Phối hợp giữa các bên",
+                "agency": "Sở Tài nguyên và Môi trường",
+                "legal": "Khoản 1b Điều 55 Luật ĐCKS 2025",
+                "guide": "Công ty tư vấn thiết kế lập, Chủ đầu tư phê duyệt trước khi nộp."
             },
             {
-                id: "s2-i3",
-                name: "Bản đồ khu vực thăm dò khoáng sản",
-                legal: "Khoản 1c Điều 55 Luật ĐCKS 2025",
-                guidance: "Bản đồ địa hình hệ tọa độ VN2000, tỷ lệ 1/5.000 - 1/25.000."
-            }
-        ]
-    },
-    {
-        id: "step-3",
-        title: "Bước 3: Phê duyệt trữ lượng khoáng sản",
-        items: [
-            {
-                id: "s3-i1",
-                name: "Báo cáo kết quả thăm dò khoáng sản",
-                legal: "Luật ĐCKS 2025",
-                guidance: "Nộp kèm theo các biên bản nghiệm thu khối lượng, chất lượng công tác thăm dò."
-            },
-            {
-                id: "s3-i2",
-                name: "Quyết định phê duyệt trữ lượng",
-                legal: "Hội đồng đánh giá trữ lượng / UBND Tỉnh",
-                guidance: "Thời gian thẩm định: Tối đa 60 ngày."
+                "doc_name": "Bản đồ khu vực thăm dò khoáng sản",
+                "responsible": "Công ty",
+                "agency": "Sở Tài nguyên và Môi trường",
+                "legal": "Khoản 1c Điều 55 Luật ĐCKS 2025",
+                "guide": "Tỷ lệ bản đồ 1/5.000, hệ tọa độ VN2000."
             }
         ]
     }
@@ -64,8 +51,10 @@ const defaultSteps = [
 
 // --- APP STATE ---
 let stepsData = [];
-let userProgress = {}; // Format: { "s1-i1": true, "s1-i2": false, ... }
+let userProgress = {}; // Format: { "s1-i0": true, "s1-i1": false, ... }
 let isBypassMode = false;
+let filterResponsible = "ALL";
+let filterAgency = "ALL";
 
 // --- DOM ELEMENTS ---
 const stepsContainer = document.getElementById('steps-container');
@@ -74,11 +63,14 @@ const bypassSwitch = document.getElementById('bypass-switch');
 const fileUpload = document.getElementById('file-upload');
 const btnLoadData = document.getElementById('btn-load-data');
 const btnReset = document.getElementById('btn-reset');
+const selFilterResponsible = document.getElementById('filter-responsible');
+const selFilterAgency = document.getElementById('filter-agency');
 
 // --- INITIALIZATION ---
 function init() {
     loadData();
     loadProgress();
+    populateAgencyFilter();
     setupEventListeners();
     render();
 }
@@ -113,10 +105,30 @@ function saveProgress() {
     localStorage.setItem('checklistProgress', JSON.stringify(userProgress));
 }
 
+function populateAgencyFilter() {
+    const agencies = new Set();
+    stepsData.forEach(step => {
+        step.checklist.forEach(item => {
+            if (item.agency) agencies.add(item.agency.trim());
+        });
+    });
+    
+    // Clear existing options except ALL
+    selFilterAgency.innerHTML = '<option value="ALL">-- Tất cả cơ quan tiếp nhận --</option>';
+    
+    // Sort and add new options
+    Array.from(agencies).sort().forEach(agency => {
+        const option = document.createElement('option');
+        option.value = agency;
+        option.textContent = agency;
+        selFilterAgency.appendChild(option);
+    });
+}
+
 function setupEventListeners() {
     bypassSwitch.addEventListener('change', (e) => {
         isBypassMode = e.target.checked;
-        render(); // Re-render everything to update lock statuses
+        render();
     });
 
     btnLoadData.addEventListener('click', () => {
@@ -134,9 +146,15 @@ function setupEventListeners() {
                 if (Array.isArray(newData)) {
                     stepsData = newData;
                     localStorage.setItem('checklistData', JSON.stringify(stepsData));
-                    // Reset progress when new data is loaded
                     userProgress = {};
                     saveProgress();
+                    populateAgencyFilter();
+                    // Reset filters
+                    filterResponsible = "ALL";
+                    filterAgency = "ALL";
+                    selFilterResponsible.value = "ALL";
+                    selFilterAgency.value = "ALL";
+                    
                     render();
                     alert("Đã nạp dữ liệu thành công!");
                 } else {
@@ -147,7 +165,6 @@ function setupEventListeners() {
             }
         };
         reader.readAsText(file);
-        // Reset file input
         fileUpload.value = '';
     });
 
@@ -159,42 +176,81 @@ function setupEventListeners() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     });
+
+    selFilterResponsible.addEventListener('change', (e) => {
+        filterResponsible = e.target.value;
+        render();
+    });
+
+    selFilterAgency.addEventListener('change', (e) => {
+        filterAgency = e.target.value;
+        render();
+    });
+}
+
+// Helper to get badge class for responsible party
+function getResponsibleBadgeClass(role) {
+    if (!role) return 'bg-secondary text-white';
+    const lowerRole = role.toLowerCase();
+    if (lowerRole.includes('công ty')) return 'badge-company';
+    if (lowerRole.includes('chủ đầu tư')) return 'badge-investor';
+    if (lowerRole.includes('phối hợp')) return 'badge-coord';
+    return 'bg-secondary text-white';
 }
 
 // --- RENDER LOGIC ---
 function render() {
     stepsContainer.innerHTML = '';
-    let totalItems = 0;
-    let completedItems = 0;
+    
+    // Variables for overall progress (ignores filters)
+    let totalItemsSystem = 0;
+    let completedItemsSystem = 0;
 
-    let previousStepCompleted = true; // Initially true so Step 1 is open
+    let previousStepCompleted = true; // For unlock mechanism
 
-    stepsData.forEach((step, index) => {
-        // Calculate step progress
-        let stepTotal = step.items.length;
-        let stepCompleted = 0;
+    stepsData.forEach((step, stepIndex) => {
+        // Calculate step progress (ignores filters for logic lock/unlock)
+        let stepTotalSystem = step.checklist.length;
+        let stepCompletedSystem = 0;
         
-        step.items.forEach(item => {
-            totalItems++;
-            if (userProgress[item.id]) {
-                stepCompleted++;
-                completedItems++;
+        let visibleItemsInStep = 0; // To hide step if all items are filtered out
+
+        step.checklist.forEach((item, itemIndex) => {
+            const itemId = `s${step.step_id}-i${itemIndex}`;
+            totalItemsSystem++;
+            if (userProgress[itemId]) {
+                stepCompletedSystem++;
+                completedItemsSystem++;
+            }
+            
+            // Check visibility for filter
+            const matchResp = filterResponsible === "ALL" || (item.responsible && item.responsible === filterResponsible);
+            const matchAgency = filterAgency === "ALL" || (item.agency && item.agency === filterAgency);
+            if (matchResp && matchAgency) {
+                visibleItemsInStep++;
             }
         });
 
-        let isStepCompleted = (stepCompleted === stepTotal && stepTotal > 0);
+        let isStepCompleted = (stepCompletedSystem === stepTotalSystem && stepTotalSystem > 0);
         
-        // Determine lock status
-        // A step is unlocked if Bypass mode is ON, or if it's the first step, or if previous step is completed.
-        let isUnlocked = isBypassMode || index === 0 || previousStepCompleted;
+        // Determine lock status: unlocked if Bypass, or first step, or previous step completed
+        let isUnlocked = isBypassMode || stepIndex === 0 || previousStepCompleted;
         
-        // Determine active status (unlocked but not yet completed)
+        // Determine active status
         let isActive = isUnlocked && !isStepCompleted;
+
+        // Skip rendering this step if filters hid all its items, UNLESS it's active/completed and we want to show empty state (better to just hide it for cleaner UI)
+        if (visibleItemsInStep === 0 && filterResponsible !== "ALL" || (visibleItemsInStep === 0 && filterAgency !== "ALL")) {
+            // Wait, if it's completely filtered out, we might want to hide the step card entirely.
+            // But we must update previousStepCompleted for the NEXT step regardless of filter visibility!
+            previousStepCompleted = isStepCompleted;
+            return; 
+        }
 
         // Render Step Card
         const card = document.createElement('div');
         card.className = `step-card ${!isUnlocked ? 'locked' : ''} ${isActive ? 'active' : ''} ${isStepCompleted ? 'completed' : ''}`;
-        card.id = `step-card-${index}`;
+        card.id = `step-card-${step.step_id}`;
 
         // Header
         const header = document.createElement('div');
@@ -206,13 +262,13 @@ function render() {
         } else if (isStepCompleted) {
             statusHtml = `<span class="step-status completed"><i class="fa-solid fa-circle-check"></i> Hoàn thành</span>`;
         } else {
-            statusHtml = `<span class="step-status active"><i class="fa-solid fa-hourglass-half"></i> Đang thực hiện (${stepCompleted}/${stepTotal})</span>`;
+            statusHtml = `<span class="step-status active"><i class="fa-solid fa-hourglass-half"></i> Đang thực hiện (${stepCompletedSystem}/${stepTotalSystem})</span>`;
         }
 
         header.innerHTML = `
             <h3 class="step-title">
                 ${isStepCompleted ? '<i class="fa-solid fa-check text-success me-2"></i>' : ''}
-                ${step.title}
+                ${step.step_name}
             </h3>
             ${statusHtml}
         `;
@@ -222,27 +278,42 @@ function render() {
         const body = document.createElement('div');
         body.className = 'card-body p-0';
 
-        step.items.forEach((item, itemIndex) => {
-            const isChecked = !!userProgress[item.id];
+        step.checklist.forEach((item, itemIndex) => {
+            const itemId = `s${step.step_id}-i${itemIndex}`;
+            const isChecked = !!userProgress[itemId];
+            
+            // Apply Filters
+            const matchResp = filterResponsible === "ALL" || (item.responsible && item.responsible === filterResponsible);
+            const matchAgency = filterAgency === "ALL" || (item.agency && item.agency === filterAgency);
+            
+            if (!matchResp || !matchAgency) {
+                return; // Skip rendering this item
+            }
             
             const itemDiv = document.createElement('div');
             itemDiv.className = `checklist-item d-flex ${isChecked ? 'checked' : ''}`;
             
+            const respBadgeClass = getResponsibleBadgeClass(item.responsible);
+            
             itemDiv.innerHTML = `
                 <div class="form-check d-flex gap-3 w-100">
-                    <input class="form-check-input checklist-checkbox" type="checkbox" id="${item.id}" ${isChecked ? 'checked' : ''} ${!isUnlocked ? 'disabled' : ''}>
+                    <input class="form-check-input checklist-checkbox" type="checkbox" id="${itemId}" ${isChecked ? 'checked' : ''} ${!isUnlocked ? 'disabled' : ''}>
                     <div class="flex-grow-1">
-                        <label class="form-check-label w-100" for="${item.id}" style="cursor: pointer;">
-                            <div class="item-title">${item.name}</div>
-                            <div class="item-legal"><i class="fa-solid fa-scale-balanced me-1"></i> ${item.legal}</div>
+                        <label class="form-check-label w-100" for="${itemId}" style="cursor: pointer;">
+                            <div class="item-title">${item.doc_name}</div>
+                            <div class="item-meta">
+                                ${item.responsible ? `<span class="badge-custom ${respBadgeClass}"><i class="fa-solid fa-user-tie"></i> ${item.responsible}</span>` : ''}
+                                ${item.agency ? `<span class="badge-custom badge-agency"><i class="fa-solid fa-building-columns"></i> ${item.agency}</span>` : ''}
+                            </div>
+                            <div class="item-legal"><i class="fa-solid fa-scale-balanced text-secondary"></i> Căn cứ: ${item.legal}</div>
                         </label>
-                        ${item.guidance ? `
-                            <button class="btn btn-outline-secondary btn-guidance mt-1" type="button" data-bs-toggle="collapse" data-bs-target="#guidance-${item.id}" aria-expanded="false" aria-controls="guidance-${item.id}">
-                                <i class="fa-solid fa-circle-info"></i> Xem hướng dẫn
+                        ${item.guide ? `
+                            <button class="btn btn-outline-secondary btn-guidance mt-1" type="button" data-bs-toggle="collapse" data-bs-target="#guidance-${itemId}" aria-expanded="false" aria-controls="guidance-${itemId}">
+                                <i class="fa-solid fa-circle-info"></i> Xem hướng dẫn / Lưu ý
                             </button>
-                            <div class="collapse" id="guidance-${item.id}">
+                            <div class="collapse" id="guidance-${itemId}">
                                 <div class="guidance-content">
-                                    ${item.guidance}
+                                    ${item.guide}
                                 </div>
                             </div>
                         ` : ''}
@@ -253,44 +324,59 @@ function render() {
             // Event listener for checkbox
             const checkbox = itemDiv.querySelector('input[type="checkbox"]');
             checkbox.addEventListener('change', (e) => {
-                userProgress[item.id] = e.target.checked;
+                userProgress[itemId] = e.target.checked;
                 saveProgress();
                 
-                // Check if this step just became completed
-                const newStepCompleted = step.items.filter(i => userProgress[i.id]).length === stepTotal;
+                // Recalculate step completion for auto-scroll logic
+                const currentStepCompletedCount = step.checklist.filter((_, idx) => userProgress[`s${step.step_id}-i${idx}`]).length;
+                const newStepCompleted = currentStepCompletedCount === stepTotalSystem;
+                
                 if (newStepCompleted && !isStepCompleted && !isBypassMode) {
-                    // Step just completed! Re-render and scroll to next step.
                     render();
-                    const nextStepCard = document.getElementById(`step-card-${index + 1}`);
-                    if (nextStepCard) {
+                    // Try to scroll to next available step
+                    const nextStepIndex = stepIndex + 1;
+                    if (nextStepIndex < stepsData.length) {
+                        const nextStepDataId = stepsData[nextStepIndex].step_id;
                         setTimeout(() => {
-                            nextStepCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            const nextStepCard = document.getElementById(`step-card-${nextStepDataId}`);
+                            if (nextStepCard) {
+                                nextStepCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
                         }, 100);
                     }
                 } else {
-                    render(); // Re-render to update UI (progress, active state)
+                    render();
                 }
             });
 
             body.appendChild(itemDiv);
         });
         
-        card.appendChild(body);
+        // If a step is empty because of filters, we already handled returning early. 
+        // But if we got here and body has no children (e.g. edge case), don't append card.
+        if (body.children.length > 0) {
+            card.appendChild(body);
+            
+            // Lock Overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'lock-overlay';
+            overlay.innerHTML = `<div class="lock-icon"><i class="fa-solid fa-lock"></i></div>`;
+            card.appendChild(overlay);
 
-        // Lock Overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'lock-overlay';
-        overlay.innerHTML = `<div class="lock-icon"><i class="fa-solid fa-lock"></i></div>`;
-        card.appendChild(overlay);
+            stepsContainer.appendChild(card);
+        }
 
-        stepsContainer.appendChild(card);
-
-        // Update previousStepCompleted for the next iteration
+        // Update previousStepCompleted for the next iteration (MUST be based on system total, not filtered visible items)
         previousStepCompleted = isStepCompleted;
     });
+    
+    // Handle case where all steps are filtered out
+    if (stepsContainer.children.length === 0) {
+         stepsContainer.innerHTML = `<div class="text-center p-5 text-muted"><i class="fa-solid fa-magnifying-glass fs-2 mb-3"></i><br>Không có hồ sơ nào khớp với bộ lọc hiện tại.</div>`;
+    }
 
-    // Update overall progress bar
-    const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+    // Update overall progress bar (based on TOTAL SYSTEM items, unaffected by filters)
+    const progressPercent = totalItemsSystem > 0 ? Math.round((completedItemsSystem / totalItemsSystem) * 100) : 0;
     overallProgress.style.width = `${progressPercent}%`;
     overallProgress.setAttribute('aria-valuenow', progressPercent);
     overallProgress.textContent = `${progressPercent}%`;
