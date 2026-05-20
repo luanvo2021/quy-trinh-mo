@@ -19,6 +19,7 @@ const db = getDatabase(app);
 // Firebase References
 const stepsDataRef = ref(db, 'globalProject/stepsData');
 const userProgressRef = ref(db, 'globalProject/userProgress');
+const lawDatabaseRef = ref(db, 'globalProject/lawDatabase');
 
 // --- INITIAL DATA (DUMMY DATA) ---
 const defaultSteps = [
@@ -109,7 +110,6 @@ const cloudStatus = document.getElementById('cloud-status');
 // --- INITIALIZATION ---
 function init() {
     loadAiConfig();
-    loadLawDatabase();
     setupEventListeners();
     initFirebaseListeners();
 }
@@ -148,6 +148,21 @@ function initFirebaseListeners() {
         isProgressLoaded = true;
         checkAndRender();
     });
+
+    onValue(lawDatabaseRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            LAW_DATABASE = data.text || "";
+            uploadedLawFilesCount = data.count || 0;
+            if (uploadedLawFilesCount > 0) {
+                lawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: ${uploadedLawFilesCount} file`;
+                lawStatus.classList.replace('bg-secondary', 'bg-success');
+            } else {
+                lawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: 0 file`;
+                lawStatus.classList.replace('bg-success', 'bg-secondary');
+            }
+        }
+    });
 }
 
 function checkAndRender() {
@@ -162,19 +177,6 @@ function saveStepsData() {
 
 function saveProgress() {
     set(userProgressRef, userProgress);
-}
-
-function loadLawDatabase() {
-    const savedLawDb = localStorage.getItem('LAW_DATABASE');
-    const savedLawCount = localStorage.getItem('uploadedLawFilesCount');
-    if (savedLawDb) {
-        LAW_DATABASE = savedLawDb;
-        uploadedLawFilesCount = parseInt(savedLawCount, 10) || 0;
-        if (uploadedLawFilesCount > 0) {
-            lawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: ${uploadedLawFilesCount} file`;
-            lawStatus.classList.replace('bg-secondary', 'bg-success');
-        }
-    }
 }
 
 function loadAiConfig() {
@@ -337,19 +339,25 @@ function setupEventListeners() {
         lawStatus.classList.replace('bg-secondary', 'bg-success');
         
         try {
+            // Đẩy kho luật lên Cloud để đồng nghiệp cũng thấy
+            set(lawDatabaseRef, { text: LAW_DATABASE, count: uploadedLawFilesCount });
+            
+            // Fallback lưu ở local cho an toàn
             localStorage.setItem('LAW_DATABASE', LAW_DATABASE);
             localStorage.setItem('uploadedLawFilesCount', uploadedLawFilesCount.toString());
         } catch (err) {
-            alert("Cảnh báo: Kho luật của bạn quá lớn để lưu trữ tự động trên trình duyệt. Dữ liệu luật sẽ bị mất khi bạn tải lại trang (F5).");
+            console.error("Lỗi khi lưu kho luật:", err);
+            alert("Cảnh báo: Kho luật của bạn có thể quá lớn. Đã lưu ở máy cá nhân nhưng có thể không đồng bộ được sang máy đồng nghiệp.");
         }
         
         fileUploadLaw.value = ''; // reset
     });
 
     btnClearLaw.addEventListener('click', () => {
-        if (confirm("Bạn có chắc chắn muốn xóa toàn bộ kho dữ liệu luật đã nạp không?")) {
+        if (confirm("Bạn có chắc chắn muốn xóa toàn bộ kho dữ liệu luật (ảnh hưởng đến tất cả những người đang xem) không?")) {
             LAW_DATABASE = "";
             uploadedLawFilesCount = 0;
+            set(lawDatabaseRef, { text: "", count: 0 });
             localStorage.removeItem('LAW_DATABASE');
             localStorage.removeItem('uploadedLawFilesCount');
             lawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: 0 file`;
