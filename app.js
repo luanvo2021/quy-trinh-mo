@@ -444,9 +444,18 @@ async function extractChecklistWithAI(stepId) {
     if (stepIndex === -1) return;
     const stepData = stepsData[stepIndex];
 
+    // Cảnh báo nếu checklist đã có dữ liệu
+    if (stepData.checklist && stepData.checklist.length > 0) {
+        const confirmed = confirm(
+            `⚠️ Cảnh báo!\n\nBước "${stepData.step_name}" đã có ${stepData.checklist.length} mục hồ sơ.\n\nNếu tiếp tục, AI sẽ XÓA TOÀN BỘ nội dung cũ và tạo checklist MỚI (ảnh hưởng đến tất cả mọi người trong nhóm).\n\nBạn có chắc muốn tạo lại không?`
+        );
+        if (!confirmed) return;
+    }
+
     // Set Loading State
     isLoadingAI = stepId;
     render();
+
 
     try {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
@@ -614,12 +623,22 @@ function render() {
                     </div>
                 `;
             } else {
-                aiArea.innerHTML = `
-                    <span class="text-muted" style="font-size:0.9rem;"><i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i> Trợ lý AI có thể tự động lập checklist dựa trên dữ liệu luật đã nạp.</span>
-                    <button class="btn btn-outline-primary btn-sm btn-ai-extract" data-step-id="${step.step_id}">
-                        <i class="fa-solid fa-robot"></i> AI Trích xuất hồ sơ & Hướng dẫn
-                    </button>
-                `;
+                const hasChecklist = step.checklist.length > 0;
+                if (hasChecklist) {
+                    aiArea.innerHTML = `
+                        <span class="text-muted" style="font-size:0.85rem;"><i class="fa-solid fa-circle-check text-success me-1"></i> Đã có checklist (${step.checklist.length} mục). Chỉnh sửa thủ công hoặc tạo lại bằng AI.</span>
+                        <button class="btn btn-outline-secondary btn-sm btn-ai-extract" data-step-id="${step.step_id}" title="Cảnh báo: Sẽ xóa toàn bộ checklist hiện tại và tạo mới bằng AI">
+                            <i class="fa-solid fa-rotate-right"></i> Tạo lại bằng AI
+                        </button>
+                    `;
+                } else {
+                    aiArea.innerHTML = `
+                        <span class="text-muted" style="font-size:0.9rem;"><i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i> Trợ lý AI có thể tự động lập checklist dựa trên dữ liệu luật đã nạp.</span>
+                        <button class="btn btn-outline-primary btn-sm btn-ai-extract" data-step-id="${step.step_id}">
+                            <i class="fa-solid fa-robot"></i> AI Trích xuất hồ sơ &amp; Hướng dẫn
+                        </button>
+                    `;
+                }
             }
             card.appendChild(aiArea);
         }
