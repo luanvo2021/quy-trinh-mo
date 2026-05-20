@@ -14,7 +14,7 @@ const defaultSteps = [
             {
                 "doc_name": "Hồ sơ năng lực tài chính và kinh nghiệm khai thác",
                 "responsible": "Chủ đầu tư",
-                "agency": "Sở Kế hoạch và Đầu tư",
+                "agency": "Sở Tài chính",
                 "legal": "Luật Đầu tư công và Nghị định hướng dẫn liên quan",
                 "guide": "Cần chuẩn bị báo cáo tài chính 2 năm gần nhất có kiểm toán."
             }
@@ -27,21 +27,21 @@ const defaultSteps = [
             {
                 "doc_name": "Đơn đề nghị cấp Giấy phép thăm dò khoáng sản",
                 "responsible": "Công ty",
-                "agency": "Sở Tài nguyên và Môi trường",
+                "agency": "Sở Nông nghiệp và Môi trường",
                 "legal": "Khoản 1a Điều 55 Luật ĐCKS 2025",
                 "guide": "Sử dụng Mẫu số 01 kèm theo Nghị định 66."
             },
             {
                 "doc_name": "Đề án thăm dò khoáng sản",
                 "responsible": "Phối hợp giữa các bên",
-                "agency": "Sở Tài nguyên và Môi trường",
+                "agency": "Sở Nông nghiệp và Môi trường",
                 "legal": "Khoản 1b Điều 55 Luật ĐCKS 2025",
                 "guide": "Công ty tư vấn thiết kế lập, Chủ đầu tư phê duyệt trước khi nộp."
             },
             {
                 "doc_name": "Bản đồ khu vực thăm dò khoáng sản",
                 "responsible": "Công ty",
-                "agency": "Sở Tài nguyên và Môi trường",
+                "agency": "Sở Nông nghiệp và Môi trường",
                 "legal": "Khoản 1c Điều 55 Luật ĐCKS 2025",
                 "guide": "Tỷ lệ bản đồ 1/5.000, hệ tọa độ VN2000."
             }
