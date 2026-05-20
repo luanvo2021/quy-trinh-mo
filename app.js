@@ -1,4 +1,24 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, onValue, set, update } from "firebase/database";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCX2gUFhAaVeJOliOF221a_4C4rJSPprvA",
+  authDomain: "process-app-c3596.firebaseapp.com",
+  databaseURL: "https://process-app-c3596-default-rtdb.firebaseio.com",
+  projectId: "process-app-c3596",
+  storageBucket: "process-app-c3596.firebasestorage.app",
+  messagingSenderId: "8263139055",
+  appId: "1:8263139055:web:7f86a36766d69b4ce9a51a",
+  measurementId: "G-1DCHTP3TKB"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Firebase References
+const stepsDataRef = ref(db, 'globalProject/stepsData');
+const userProgressRef = ref(db, 'globalProject/userProgress');
 
 // --- INITIAL DATA (DUMMY DATA) ---
 const defaultSteps = [
@@ -82,16 +102,64 @@ const btnUploadLaw = document.getElementById('btn-upload-law');
 const btnClearLaw = document.getElementById('btn-clear-law');
 const fileUploadLaw = document.getElementById('file-upload-law');
 const lawStatus = document.getElementById('law-status');
+const cloudStatus = document.getElementById('cloud-status');
 
 // --- INITIALIZATION ---
 function init() {
-    loadData();
-    loadProgress();
     loadAiConfig();
     loadLawDatabase();
-    populateFilters();
     setupEventListeners();
-    render();
+    initFirebaseListeners();
+}
+
+let isDataLoaded = false;
+let isProgressLoaded = false;
+
+function initFirebaseListeners() {
+    const connectedRef = ref(db, ".info/connected");
+    onValue(connectedRef, (snap) => {
+        if (snap.val() === true) {
+            cloudStatus.className = "badge bg-success text-white";
+            cloudStatus.innerHTML = `<i class="fa-solid fa-cloud"></i> Đã đồng bộ Cloud`;
+        } else {
+            cloudStatus.className = "badge bg-warning text-dark";
+            cloudStatus.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Mất kết nối`;
+        }
+    });
+
+    onValue(stepsDataRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            stepsData = data;
+        } else {
+            stepsData = defaultSteps;
+            set(stepsDataRef, stepsData);
+        }
+        isDataLoaded = true;
+        populateFilters();
+        checkAndRender();
+    });
+
+    onValue(userProgressRef, (snapshot) => {
+        const data = snapshot.val();
+        userProgress = data || {};
+        isProgressLoaded = true;
+        checkAndRender();
+    });
+}
+
+function checkAndRender() {
+    if (isDataLoaded && isProgressLoaded) {
+        render();
+    }
+}
+
+function saveStepsData() {
+    set(stepsDataRef, stepsData);
+}
+
+function saveProgress() {
+    set(userProgressRef, userProgress);
 }
 
 function loadLawDatabase() {
@@ -113,47 +181,6 @@ function loadAiConfig() {
         geminiApiKey = savedKey;
         inputApiKey.value = savedKey;
     }
-}
-
-function loadData() {
-    const savedData = localStorage.getItem('checklistData');
-    if (savedData) {
-        try {
-            stepsData = JSON.parse(savedData);
-            // Tự động chuyển đổi tên cơ quan cũ nếu có trong localStorage
-            stepsData.forEach(step => {
-                if (step.checklist) {
-                    step.checklist.forEach(item => {
-                        if (item.agency) {
-                            item.agency = item.agency.replace(/TN&MT/g, "NN&MT");
-                            item.agency = item.agency.replace(/Tài nguyên và Môi trường/g, "Nông nghiệp và Môi trường");
-                        }
-                    });
-                }
-            });
-        } catch(e) {
-            stepsData = defaultSteps;
-        }
-    } else {
-        stepsData = defaultSteps;
-    }
-}
-
-function loadProgress() {
-    const savedProgress = localStorage.getItem('checklistProgress');
-    if (savedProgress) {
-        try {
-            userProgress = JSON.parse(savedProgress);
-        } catch(e) {
-            userProgress = {};
-        }
-    } else {
-        userProgress = {};
-    }
-}
-
-function saveProgress() {
-    localStorage.setItem('checklistProgress', JSON.stringify(userProgress));
 }
 
 function populateFilters() {
@@ -219,7 +246,7 @@ function setupEventListeners() {
                     });
                     
                     stepsData = newData;
-                    localStorage.setItem('checklistData', JSON.stringify(stepsData));
+                    saveStepsData();
                     userProgress = {};
                     saveProgress();
                     populateFilters();
@@ -241,10 +268,9 @@ function setupEventListeners() {
     });
 
     btnReset.addEventListener('click', () => {
-        if (confirm("Bạn có chắc chắn muốn đặt lại toàn bộ tiến độ?")) {
+        if (confirm("Bạn có chắc chắn muốn đặt lại toàn bộ tiến độ (ảnh hưởng đến tất cả những người đang xem)?")) {
             userProgress = {};
             saveProgress();
-            render();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     });
@@ -392,7 +418,7 @@ YÊU CẦU: Hãy quét toàn bộ kho văn bản pháp luật đầu vào, tìm 
         if (Array.isArray(checklist)) {
             // Update the step with new checklist
             stepsData[stepIndex].checklist = checklist;
-            localStorage.setItem('checklistData', JSON.stringify(stepsData));
+            saveStepsData();
             
             // Clean up old progress for this step to avoid ghost checked items
             Object.keys(userProgress).forEach(key => {
