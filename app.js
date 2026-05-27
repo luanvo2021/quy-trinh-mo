@@ -784,7 +784,7 @@ async function extractChecklistWithAI(stepId) {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
         
         const query = stepData.step_name + " " + (stepData.step_description || "");
-        const relevantLawContext = retrieveRelevantContext(query, LAW_DATABASE, 120000);
+        const relevantLawContext = retrieveRelevantContext(query, LAW_DATABASE, 35000);
         
         const prompt = `MỤC TIÊU: Bạn là một trợ lý pháp lý chuyên nghiệp về ngành địa chất, khoáng sản, thủy lợi tại Việt Nam.
 NGỮ CẢNH DỰ ÁN: Dự án hiện tại đang ở giai đoạn: ${stepData.step_name} với mô tả: ${stepData.step_description || "Không có"}.
@@ -804,14 +804,20 @@ YÊU CẦU: Hãy quét toàn bộ kho văn bản pháp luật đầu vào, tìm 
 
         let result;
         try {
-            const primaryModel = genAI.getGenerativeModel({ model: geminiModelName });
+            const primaryModel = genAI.getGenerativeModel({ 
+                model: geminiModelName,
+                generationConfig: { responseMimeType: "application/json" }
+            });
             result = await primaryModel.generateContent(prompt);
         } catch (apiError) {
             console.warn("Lỗi gọi API Model chính:", apiError);
             if (apiError.message && (apiError.message.includes('503') || apiError.message.includes('overloaded'))) {
                 console.log("Mô hình chính đang quá tải (503). Đang tự động chuyển sang mô hình dự phòng...");
                 const fallbackModelName = geminiModelName === "gemini-2.5-flash" ? "gemini-2.5-pro" : "gemini-2.5-flash";
-                const fallbackModel = genAI.getGenerativeModel({ model: fallbackModelName });
+                const fallbackModel = genAI.getGenerativeModel({ 
+                    model: fallbackModelName,
+                    generationConfig: { responseMimeType: "application/json" }
+                });
                 result = await fallbackModel.generateContent(prompt);
             } else {
                 throw apiError;
