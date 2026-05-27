@@ -188,7 +188,11 @@ function loadAiConfig() {
         inputApiKey.value = geminiApiKey; // Show default hardcoded key
     }
     
-    const savedModel = localStorage.getItem('geminiModelName');
+    let savedModel = localStorage.getItem('geminiModelName');
+    if (savedModel === "gemini-1.5-pro") {
+        savedModel = "gemini-2.5-pro";
+        localStorage.setItem('geminiModelName', savedModel);
+    }
     if (savedModel) {
         geminiModelName = savedModel;
         selGeminiModel.value = savedModel;
@@ -487,7 +491,7 @@ YÊU CẦU: Hãy quét toàn bộ kho văn bản pháp luật đầu vào, tìm 
             console.warn("Lỗi gọi API Model chính:", apiError);
             if (apiError.message && (apiError.message.includes('503') || apiError.message.includes('overloaded'))) {
                 console.log("Mô hình chính đang quá tải (503). Đang tự động chuyển sang mô hình dự phòng...");
-                const fallbackModelName = geminiModelName === "gemini-2.5-flash" ? "gemini-1.5-pro" : "gemini-2.5-flash";
+                const fallbackModelName = geminiModelName === "gemini-2.5-flash" ? "gemini-2.5-pro" : "gemini-2.5-flash";
                 const fallbackModel = genAI.getGenerativeModel({ model: fallbackModelName });
                 result = await fallbackModel.generateContent(prompt);
             } else {
