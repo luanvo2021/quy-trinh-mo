@@ -69,14 +69,33 @@
         <!-- DASHBOARD VIEW -->
         <div id="dashboard-view" class="row justify-content-center">
             <div class="col-lg-10">
-                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                     <div>
                         <h2 class="fw-bold text-navy mb-1"><i class="fa-solid fa-folder-tree me-2"></i>Bảng Điều Khiển Dự Án</h2>
                         <p class="text-muted mb-0">Quản lý và theo dõi quy trình pháp lý các mỏ khoáng sản</p>
                     </div>
-                    <button class="btn btn-primary shadow-sm" id="btn-add-project">
-                        <i class="fa-solid fa-circle-plus me-1"></i> Thêm Dự Án Mới
-                    </button>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <!-- Global Law Upload Controls -->
+                        <div class="bg-white border rounded p-1 d-flex align-items-center gap-2 shadow-sm" style="border-radius: 8px;">
+                            <span id="global-law-status" class="badge bg-secondary p-2" style="font-size:0.78rem;">
+                                <i class="fa-solid fa-database me-1"></i> Luật hệ thống: 0 file
+                            </span>
+                            <button class="btn btn-outline-success btn-sm" id="btn-upload-global-law" title="Nạp văn bản pháp luật hệ thống">
+                                <i class="fa-solid fa-book-open-reader me-1"></i> Nạp luật hệ thống
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" id="btn-clear-global-law" title="Xóa toàn bộ luật hệ thống">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                            <input type="file" id="file-upload-global-law" accept=".txt" class="d-none" multiple>
+                        </div>
+                        
+                        <button class="btn btn-primary shadow-sm" id="btn-add-project">
+                            <i class="fa-solid fa-circle-plus me-1"></i> Thêm Dự Án Mới
+                        </button>
+                    </div>
+                </div>
+                <div class="text-end text-muted mb-3 me-2" style="font-size: 0.75rem;">
+                    * Lưu ý: Nút "Nạp luật hệ thống" chỉ hỗ trợ nạp các file văn bản định dạng <strong>.txt</strong>
                 </div>
 
                 <!-- Dashboard Stats -->

@@ -82,6 +82,8 @@ let filterResponsible = "ALL";
 let filterAgency = "ALL";
 
 // AI State
+let GLOBAL_LAW_DATABASE = "";
+let globalLawFilesCount = 0;
 let LAW_DATABASE = "";
 let uploadedLawFilesCount = 0;
 let geminiApiKey = "";
@@ -107,6 +109,10 @@ const btnAddProject = document.getElementById('btn-add-project');
 const projectsGrid = document.getElementById('projects-grid');
 const searchProjectsInput = document.getElementById('search-projects');
 const sortProjectsSelect = document.getElementById('sort-projects');
+const globalLawStatus = document.getElementById('global-law-status');
+const btnUploadGlobalLaw = document.getElementById('btn-upload-global-law');
+const btnClearGlobalLaw = document.getElementById('btn-clear-global-law');
+const fileUploadGlobalLaw = document.getElementById('file-upload-global-law');
 
 const statTotalProjects = document.getElementById('stat-total-projects');
 const statCompletedProjects = document.getElementById('stat-completed-projects');
@@ -161,6 +167,28 @@ function initFirebaseListeners() {
         
         // Handle routing once initial project list is loaded
         handleRouting();
+    });
+
+    // Listen to global system law database
+    const globalLawRef = ref(db, 'globalLawDatabase');
+    onValue(globalLawRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            GLOBAL_LAW_DATABASE = data.text || "";
+            globalLawFilesCount = data.count || 0;
+            if (globalLawFilesCount > 0) {
+                globalLawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Luật hệ thống: ${globalLawFilesCount} file`;
+                globalLawStatus.classList.replace('bg-secondary', 'bg-success');
+            } else {
+                globalLawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Luật hệ thống: 0 file`;
+                globalLawStatus.classList.replace('bg-success', 'bg-secondary');
+            }
+        } else {
+            GLOBAL_LAW_DATABASE = "";
+            globalLawFilesCount = 0;
+            globalLawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: 0 file`;
+            globalLawStatus.classList.replace('bg-success', 'bg-secondary');
+        }
     });
 }
 
@@ -347,6 +375,47 @@ function setupEventListeners() {
     sortProjectsSelect.addEventListener('change', (e) => {
         sortBy = e.target.value;
         renderDashboard();
+    });
+
+    btnUploadGlobalLaw.addEventListener('click', () => {
+        fileUploadGlobalLaw.click();
+    });
+
+    fileUploadGlobalLaw.addEventListener('change', async (e) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        globalLawStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang đọc...`;
+        
+        let newDatabase = GLOBAL_LAW_DATABASE;
+        for (let i = 0; i < files.length; i++) {
+            const text = await files[i].text();
+            newDatabase += `\n\n--- [FILE LUẬT HỆ THỐNG: ${files[i].name}] ---\n${text}`;
+        }
+        
+        GLOBAL_LAW_DATABASE = newDatabase;
+        globalLawFilesCount += files.length;
+        
+        try {
+            const globalLawRef = ref(db, 'globalLawDatabase');
+            set(globalLawRef, { text: GLOBAL_LAW_DATABASE, count: globalLawFilesCount });
+            alert("Đã tải lên luật hệ thống thành công!");
+        } catch (err) {
+            console.error("Lỗi khi lưu luật hệ thống:", err);
+            alert("Lỗi khi lưu kho luật hệ thống lên đám mây.");
+        }
+        
+        fileUploadGlobalLaw.value = '';
+    });
+
+    btnClearGlobalLaw.addEventListener('click', () => {
+        if (confirm("Bạn có chắc chắn muốn xóa toàn bộ kho dữ liệu luật hệ thống chung (áp dụng cho tất cả các dự án) không?")) {
+            GLOBAL_LAW_DATABASE = "";
+            globalLawFilesCount = 0;
+            const globalLawRef = ref(db, 'globalLawDatabase');
+            set(globalLawRef, { text: "", count: 0 });
+            alert("Đã xóa dữ liệu luật hệ thống thành công.");
+        }
     });
 
     // Project View events
@@ -761,8 +830,8 @@ async function extractChecklistWithAI(stepId) {
         alert("Vui lòng nhập Gemini API Key ở thanh công cụ phía trên trước khi sử dụng tính năng này!");
         return;
     }
-    if (!LAW_DATABASE) {
-        alert("Vui lòng nạp kho văn bản pháp luật trước khi yêu cầu AI trích xuất!");
+    if (!GLOBAL_LAW_DATABASE && !LAW_DATABASE) {
+        alert("Vui lòng nạp kho văn bản pháp luật (Luật hệ thống trên Dashboard hoặc Luật dự án) trước khi yêu cầu AI trích xuất!");
         return;
     }
 
@@ -784,7 +853,16 @@ async function extractChecklistWithAI(stepId) {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
         
         const query = stepData.step_name + " " + (stepData.step_description || "");
-        const relevantLawContext = retrieveRelevantContext(query, LAW_DATABASE, 35000);
+        const combinedLaw = (GLOBAL_LAW_DATABASE || "") + "\n\n" + (LAW_DATABASE || "");
+        
+        if (!combinedLaw.trim()) {
+            alert("Vui lòng nạp văn bản pháp luật trước khi trích xuất! Bạn có thể nạp 'Luật hệ thống' tại Dashboard chính hoặc 'Nạp Kho Luật' trong dự án chi tiết.");
+            isLoadingAI = null;
+            render();
+            return;
+        }
+        
+        const relevantLawContext = retrieveRelevantContext(query, combinedLaw, 35000);
         
         const prompt = `MỤC TIÊU: Bạn là một trợ lý pháp lý chuyên nghiệp về ngành địa chất, khoáng sản, thủy lợi tại Việt Nam.
 NGỮ CẢNH DỰ ÁN: Dự án hiện tại đang ở giai đoạn: ${stepData.step_name} với mô tả: ${stepData.step_description || "Không có"}.
