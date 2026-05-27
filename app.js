@@ -811,14 +811,27 @@ YÊU CẦU: Hãy quét toàn bộ kho văn bản pháp luật đầu vào, tìm 
             result = await primaryModel.generateContent(prompt);
         } catch (apiError) {
             console.warn("Lỗi gọi API Model chính:", apiError);
-            if (apiError.message && (apiError.message.includes('503') || apiError.message.includes('overloaded'))) {
-                console.log("Mô hình chính đang quá tải (503). Đang tự động chuyển sang mô hình dự phòng...");
+            const errText = apiError.message ? apiError.message.toLowerCase() : "";
+            const isRetryable = errText.includes('503') || 
+                                errText.includes('overloaded') || 
+                                errText.includes('429') || 
+                                errText.includes('quota') ||
+                                errText.includes('rate limit') ||
+                                errText.includes('rate_limit');
+                                
+            if (isRetryable) {
                 const fallbackModelName = geminiModelName === "gemini-2.5-flash" ? "gemini-2.5-pro" : "gemini-2.5-flash";
-                const fallbackModel = genAI.getGenerativeModel({ 
-                    model: fallbackModelName,
-                    generationConfig: { responseMimeType: "application/json" }
-                });
-                result = await fallbackModel.generateContent(prompt);
+                console.log(`Mô hình chính gặp lỗi giới hạn hoặc quá tải. Đang tự động chuyển sang mô hình dự phòng: ${fallbackModelName}...`);
+                try {
+                    const fallbackModel = genAI.getGenerativeModel({ 
+                        model: fallbackModelName,
+                        generationConfig: { responseMimeType: "application/json" }
+                    });
+                    result = await fallbackModel.generateContent(prompt);
+                } catch (fallbackError) {
+                    console.error("Lỗi gọi cả Model dự phòng:", fallbackError);
+                    throw new Error(`Cả 2 mô hình đều gặp lỗi.\nModel chính (${geminiModelName}): ${apiError.message}\nModel dự phòng (${fallbackModelName}): ${fallbackError.message}`);
+                }
             } else {
                 throw apiError;
             }
