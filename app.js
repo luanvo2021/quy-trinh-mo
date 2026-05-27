@@ -642,6 +642,55 @@ function setupEventListeners() {
             updateDeleteSelectedButton();
         }
     });
+
+    stepsContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const draggable = document.querySelector('.step-card.dragging');
+        if (!draggable) return;
+        
+        const afterElement = getDragAfterElement(stepsContainer, e.clientY);
+        if (afterElement == null) {
+            stepsContainer.appendChild(draggable);
+        } else {
+            stepsContainer.insertBefore(draggable, afterElement);
+        }
+    });
+}
+
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.step-card:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function saveNewOrder() {
+    const newStepsData = [];
+    const cardElements = document.querySelectorAll('.step-card');
+    cardElements.forEach(card => {
+        const id = parseInt(card.id.replace('step-card-', ''), 10);
+        const step = stepsData.find(s => s.step_id === id);
+        if (step) newStepsData.push(step);
+    });
+    
+    let orderChanged = false;
+    if (newStepsData.length === stepsData.length) {
+        for(let i=0; i<stepsData.length; i++){
+            if(stepsData[i].step_id !== newStepsData[i].step_id) orderChanged = true;
+        }
+    }
+    if (orderChanged) {
+        stepsData = newStepsData;
+        saveStepsData();
+        render(); 
+    }
 }
 
 // --- ADD PROJECT MODAL ---
@@ -1094,13 +1143,22 @@ function render() {
         card.className = `step-card ${!isUnlocked ? 'locked' : ''} ${isActive ? 'active' : ''} ${isStepCompleted ? 'completed' : ''} ${isCollapsed ? 'collapsed' : ''} ${isSelected ? 'selected' : ''}`;
         card.id = `step-card-${step.step_id}`;
 
+        card.addEventListener('dragstart', (e) => {
+            card.classList.add('dragging');
+        });
+        card.addEventListener('dragend', () => {
+            card.classList.remove('dragging');
+            card.draggable = false;
+            saveNewOrder();
+        });
+
         const header = document.createElement('div');
         header.className = 'step-header flex-wrap';
         
         header.style.cursor = 'pointer';
         header.title = "Nhấp để mở/đóng checklist";
         header.onclick = (e) => {
-            if (!e.target.closest('.btn-delete-step') && !e.target.closest('.step-select-checkbox')) {
+            if (!e.target.closest('.btn-delete-step') && !e.target.closest('.step-select-checkbox') && !e.target.closest('.btn-drag-handle')) {
                 collapsedSteps[step.step_id] = !collapsedSteps[step.step_id];
                 render();
             }
@@ -1120,6 +1178,7 @@ function render() {
         header.innerHTML = `
             <div class="d-flex flex-column w-100 mb-2 mb-md-0 w-md-auto" style="flex:1;">
                 <h3 class="step-title d-flex align-items-center">
+                    <span class="btn-drag-handle p-1 px-2 me-2 text-muted" title="Nhấn giữ để kéo thả thay đổi thứ tự" style="cursor: grab; font-size: 1.1rem;"><i class="fa-solid fa-grip-vertical"></i></span>
                     <input type="checkbox" class="form-check-input step-select-checkbox me-2 mt-0" data-step-id="${step.step_id}" ${isSelected ? 'checked' : ''} title="Chọn để xóa bước">
                     <button class="btn btn-sm btn-light btn-toggle-collapse p-1 px-2 me-2" data-step-id="${step.step_id}"><i class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i></button>
                     ${isStepCompleted ? '<i class="fa-solid fa-check text-success me-2"></i>' : ''}
@@ -1134,6 +1193,14 @@ function render() {
                 </button>
             </div>
         `;
+        
+        const dragHandle = header.querySelector('.btn-drag-handle');
+        if (dragHandle) {
+            dragHandle.addEventListener('mousedown', () => card.draggable = true);
+            dragHandle.addEventListener('mouseup', () => card.draggable = false);
+        }
+        card.addEventListener('mouseleave', () => card.draggable = false);
+
         card.appendChild(header);
         
         if (isUnlocked) {

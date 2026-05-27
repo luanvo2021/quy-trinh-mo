@@ -62,6 +62,13 @@ body {
     transform: translateY(-2px);
 }
 
+.step-card.dragging {
+    opacity: 0.5 !important;
+    border: 2px dashed var(--navy-blue) !important;
+    transform: scale(0.98);
+    transition: none !important;
+}
+
 .step-card.selected {
     border-color: #dc3545;
     background-color: rgba(220, 53, 69, 0.03);
