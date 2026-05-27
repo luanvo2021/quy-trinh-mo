@@ -77,6 +77,7 @@ let sortBy = "newest";
 // Project specific state (loaded dynamically when entering a project)
 let stepsData = [];
 let userProgress = {}; // { "s1-i0": true, ... }
+let collapsedSteps = {}; // { stepId: true/false }
 let isBypassMode = false;
 let filterResponsible = "ALL";
 let filterAgency = "ALL";
@@ -214,6 +215,7 @@ function enterProject(pId) {
 
     cleanupProjectListeners();
     currentProjectId = pId;
+    collapsedSteps = {}; // Reset collapse state
     const project = projectsList[pId];
     
     // Set Project Title Headers
@@ -239,7 +241,8 @@ function enterProject(pId) {
     unsubscribeSteps = onValue(stepsDataRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            stepsData = data;
+            // Fix Firebase empty array removal bug
+            stepsData = data.map(s => ({...s, checklist: s.checklist || []}));
         } else {
             stepsData = defaultSteps;
             set(stepsDataRef, stepsData);
@@ -445,16 +448,15 @@ function setupEventListeners() {
             try {
                 const newData = JSON.parse(event.target.result);
                 if (Array.isArray(newData)) {
-                    // Normalize legacy agency titles
+                    // Normalize legacy agency titles and handle missing checklists
                     newData.forEach(step => {
-                        if (step.checklist) {
-                            step.checklist.forEach(item => {
-                                if (item.agency) {
-                                    item.agency = item.agency.replace(/TN&MT/g, "NN&MT");
-                                    item.agency = item.agency.replace(/Tài nguyên và Môi trường/g, "Nông nghiệp và Môi trường");
-                                }
-                            });
-                        }
+                        step.checklist = step.checklist || [];
+                        step.checklist.forEach(item => {
+                            if (item.agency) {
+                                item.agency = item.agency.replace(/TN&MT/g, "NN&MT");
+                                item.agency = item.agency.replace(/Tài nguyên và Môi trường/g, "Nông nghiệp và Môi trường");
+                            }
+                        });
                     });
                     
                     stepsData = newData;
@@ -592,6 +594,13 @@ function setupEventListeners() {
                     deleteStep(stepId);
                 }
             }
+        }
+
+        if (e.target.closest('.btn-toggle-collapse')) {
+            const btn = e.target.closest('.btn-toggle-collapse');
+            const stepId = parseInt(btn.dataset.stepId, 10);
+            collapsedSteps[stepId] = !collapsedSteps[stepId];
+            render();
         }
     });
 }
@@ -1034,6 +1043,7 @@ function render() {
         const isStepCompleted = (stepCompletedSystem === stepTotalSystem && stepTotalSystem > 0);
         const isUnlocked = isBypassMode || stepIndex === 0 || previousStepCompleted;
         const isActive = isUnlocked && !isStepCompleted;
+        const isCollapsed = !!collapsedSteps[step.step_id];
 
         if (stepTotalSystem > 0 && visibleItemsInStep === 0 && (filterResponsible !== "ALL" || filterAgency !== "ALL")) {
             previousStepCompleted = isStepCompleted;
@@ -1041,11 +1051,21 @@ function render() {
         }
 
         const card = document.createElement('div');
-        card.className = `step-card ${!isUnlocked ? 'locked' : ''} ${isActive ? 'active' : ''} ${isStepCompleted ? 'completed' : ''}`;
+        card.className = `step-card ${!isUnlocked ? 'locked' : ''} ${isActive ? 'active' : ''} ${isStepCompleted ? 'completed' : ''} ${isCollapsed ? 'collapsed' : ''}`;
         card.id = `step-card-${step.step_id}`;
 
         const header = document.createElement('div');
         header.className = 'step-header flex-wrap';
+        if (isUnlocked) {
+            header.style.cursor = 'pointer';
+            header.title = "Nhấp để mở/đóng checklist";
+            header.onclick = (e) => {
+                if (!e.target.closest('.btn-delete-step')) {
+                    collapsedSteps[step.step_id] = !collapsedSteps[step.step_id];
+                    render();
+                }
+            };
+        }
         
         let statusHtml = '';
         if (!isUnlocked) {
@@ -1060,7 +1080,8 @@ function render() {
 
         header.innerHTML = `
             <div class="d-flex flex-column w-100 mb-2 mb-md-0 w-md-auto" style="flex:1;">
-                <h3 class="step-title">
+                <h3 class="step-title d-flex align-items-center">
+                    ${isUnlocked ? `<button class="btn btn-sm btn-light btn-toggle-collapse p-1 px-2 me-2" data-step-id="${step.step_id}"><i class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i></button>` : ''}
                     ${isStepCompleted ? '<i class="fa-solid fa-check text-success me-2"></i>' : ''}
                     ${step.step_name}
                 </h3>
