@@ -127,6 +127,7 @@ const bypassSwitch = document.getElementById('bypass-switch');
 const fileUpload = document.getElementById('file-upload');
 const btnLoadData = document.getElementById('btn-load-data');
 const btnReset = document.getElementById('btn-reset');
+const btnAddStep = document.getElementById('btn-add-step');
 const selFilterResponsible = document.getElementById('filter-responsible');
 const selFilterAgency = document.getElementById('filter-agency');
 
@@ -486,6 +487,8 @@ function setupEventListeners() {
         }
     });
 
+    btnAddStep.addEventListener('click', showAddStepModal);
+
     selFilterResponsible.addEventListener('change', (e) => {
         filterResponsible = e.target.value;
         render();
@@ -569,12 +572,26 @@ function setupEventListeners() {
         }
     });
 
-    // Delegate event for dynamic AI extract buttons
+    // Delegate event for dynamic AI extract buttons and Delete step buttons
     stepsContainer.addEventListener('click', (e) => {
         if (e.target.closest('.btn-ai-extract')) {
             const btn = e.target.closest('.btn-ai-extract');
             const stepId = parseInt(btn.dataset.stepId, 10);
             extractChecklistWithAI(stepId);
+        }
+
+        if (e.target.closest('.btn-delete-step')) {
+            const btn = e.target.closest('.btn-delete-step');
+            const stepId = parseInt(btn.dataset.stepId, 10);
+            const stepName = btn.dataset.stepName;
+            
+            const confirmed1 = confirm(`⚠️ CẢNH BÁO XÓA BƯỚC QUY TRÌNH!\n\nBạn có thực sự muốn xóa vĩnh viễn bước:\n"${stepName}"\n\nHành động này sẽ XÓA TOÀN BỘ danh mục Checklist hồ sơ và tiến độ công việc bên trong bước này TRÊN ĐÁM MÂY (ảnh hưởng đến tất cả đồng nghiệp).\n\nBạn có chắc chắn muốn xóa không?`);
+            if (confirmed1) {
+                const confirmed2 = confirm(`Nhấp OK để xác nhận lần cuối việc xóa vĩnh viễn bước "${stepName}".`);
+                if (confirmed2) {
+                    deleteStep(stepId);
+                }
+            }
         }
     });
 }
@@ -1051,6 +1068,11 @@ function render() {
             </div>
             <div class="d-flex align-items-center gap-3">
                 ${statusHtml}
+                ${isUnlocked ? `
+                <button class="btn btn-sm btn-outline-danger border-0 btn-delete-step p-1" data-step-id="${step.step_id}" data-step-name="${step.step_name}" title="Xóa bước quy trình này" style="line-height:1; display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+                ` : ''}
             </div>
         `;
         card.appendChild(header);
@@ -1294,6 +1316,94 @@ function showAddItemModal(stepId) {
             render();
         }
         modal.remove();
+    });
+}
+
+// --- DELETE STEP ---
+function deleteStep(stepId) {
+    const stepIndex = stepsData.findIndex(s => s.step_id === stepId);
+    if (stepIndex !== -1) {
+        // Clean up user progress for items belonging to this step
+        Object.keys(userProgress).forEach(key => {
+            if (key.startsWith(`s${stepId}-`)) {
+                delete userProgress[key];
+            }
+        });
+        
+        stepsData.splice(stepIndex, 1);
+        saveStepsData();
+        saveProgress();
+        populateFilters();
+        render();
+    }
+}
+
+// --- ADD STEP MODAL ---
+function showAddStepModal() {
+    const existing = document.getElementById('add-step-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'add-step-modal';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center; padding: 1rem;
+    `;
+    modal.innerHTML = `
+        <div style="background:#fff; border-radius:16px; padding:2rem; width:100%; max-width:520px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <h5 class="fw-bold mb-4" style="color:#1a3a5c;">
+                <i class="fa-solid fa-folder-plus me-2 text-primary"></i>Thêm Bước Quy Trình Mới
+            </h5>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Tên bước <span class="text-danger">*</span></label>
+                <input type="text" id="new-step-name" class="form-control" placeholder="VD: Bước 4: Xin giao đất và thuê đất">
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Mô tả ngắn về bước này</label>
+                <textarea id="new-step-desc" class="form-control" rows="3" placeholder="Mô tả nội dung công việc chính của bước này..."></textarea>
+            </div>
+            <div class="d-flex gap-2 justify-content-end">
+                <button id="btn-cancel-step" class="btn btn-outline-secondary">Hủy</button>
+                <button id="btn-confirm-step" class="btn btn-primary px-4"><i class="fa-solid fa-circle-check me-1"></i>Thêm bước</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    setTimeout(() => document.getElementById('new-step-name').focus(), 100);
+
+    document.getElementById('btn-cancel-step').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    document.getElementById('btn-confirm-step').addEventListener('click', () => {
+        const name = document.getElementById('new-step-name').value.trim();
+        if (!name) {
+            document.getElementById('new-step-name').classList.add('is-invalid');
+            return;
+        }
+        const desc = document.getElementById('new-step-desc').value.trim() || '';
+        
+        const newStep = {
+            step_id: Date.now(), // Unique ID based on timestamp
+            step_name: name,
+            step_description: desc,
+            checklist: []
+        };
+        
+        stepsData.push(newStep);
+        saveStepsData();
+        render();
+        modal.remove();
+        
+        // Auto scroll to the newly created step
+        setTimeout(() => {
+            const newStepCard = document.getElementById(`step-card-${newStep.step_id}`);
+            if (newStepCard) {
+                newStepCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100);
     });
 }
 
