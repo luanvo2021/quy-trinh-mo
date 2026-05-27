@@ -77,7 +77,7 @@ let sortBy = "newest";
 // Project specific state (loaded dynamically when entering a project)
 let stepsData = [];
 let userProgress = {}; // { "s1-i0": true, ... }
-let collapsedSteps = {}; // { stepId: true/false }
+let collapsedSteps = JSON.parse(localStorage.getItem('collapsedStepsData') || '{}'); // { stepId: true/false }
 let selectedSteps = new Set(); // { stepId1, stepId2 }
 let isBypassMode = false;
 let filterResponsible = "ALL";
@@ -216,7 +216,7 @@ function enterProject(pId) {
 
     cleanupProjectListeners();
     currentProjectId = pId;
-    collapsedSteps = {}; // Reset collapse state
+    // collapsedSteps is now persistent across sessions via localStorage
     selectedSteps.clear(); // Reset selection state
     const project = projectsList[pId];
     
@@ -628,6 +628,7 @@ function setupEventListeners() {
             const btn = e.target.closest('.btn-toggle-collapse');
             const stepId = parseInt(btn.dataset.stepId, 10);
             collapsedSteps[stepId] = !collapsedSteps[stepId];
+            localStorage.setItem('collapsedStepsData', JSON.stringify(collapsedSteps));
             render();
         }
         
@@ -1160,6 +1161,7 @@ function render() {
         header.onclick = (e) => {
             if (!e.target.closest('.btn-delete-step') && !e.target.closest('.step-select-checkbox') && !e.target.closest('.btn-drag-handle')) {
                 collapsedSteps[step.step_id] = !collapsedSteps[step.step_id];
+                localStorage.setItem('collapsedStepsData', JSON.stringify(collapsedSteps));
                 render();
             }
         };
