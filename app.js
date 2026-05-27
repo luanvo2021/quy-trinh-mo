@@ -1282,12 +1282,12 @@ function render() {
             body.appendChild(addRow);
         }
         
-        card.appendChild(body);
-        
         const overlay = document.createElement('div');
         overlay.className = 'lock-overlay';
         overlay.innerHTML = `<div class="lock-icon"><i class="fa-solid fa-lock"></i></div>`;
-        card.appendChild(overlay);
+        body.appendChild(overlay);
+
+        card.appendChild(body);
 
         stepsContainer.appendChild(card);
         previousStepCompleted = isStepCompleted && stepTotalSystem > 0;
