@@ -138,6 +138,8 @@ const btnUploadLaw = document.getElementById('btn-upload-law');
 const btnClearLaw = document.getElementById('btn-clear-law');
 const fileUploadLaw = document.getElementById('file-upload-law');
 const lawStatus = document.getElementById('law-status');
+const btnShowGuideDashboard = document.getElementById('btn-show-guide-dashboard');
+const btnShowGuideDetail = document.getElementById('btn-show-guide-detail');
 
 // --- INITIALIZATION ---
 function init() {
@@ -377,6 +379,11 @@ function setupEventListeners() {
         renderDashboard();
     });
 
+    btnShowGuideDashboard.addEventListener('click', (e) => {
+        e.preventDefault();
+        showWordToTxtGuideModal();
+    });
+
     btnUploadGlobalLaw.addEventListener('click', () => {
         fileUploadGlobalLaw.click();
     });
@@ -510,6 +517,11 @@ function setupEventListeners() {
 
     btnUploadLaw.addEventListener('click', () => {
         fileUploadLaw.click();
+    });
+
+    btnShowGuideDetail.addEventListener('click', (e) => {
+        e.preventDefault();
+        showWordToTxtGuideModal();
     });
 
     fileUploadLaw.addEventListener('change', async (e) => {
@@ -1283,6 +1295,84 @@ function showAddItemModal(stepId) {
         }
         modal.remove();
     });
+}
+
+// --- WORD TO TXT UTF-8 CONVERSION GUIDE MODAL ---
+function showWordToTxtGuideModal() {
+    const existing = document.getElementById('word-to-txt-guide-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'word-to-txt-guide-modal';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 99999;
+        background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+        display: flex; align-items: center; justify-content: center; padding: 1rem;
+    `;
+    modal.innerHTML = `
+        <div style="background:#fff; border-radius:18px; padding:2rem; width:100%; max-width:760px; box-shadow: 0 25px 70px rgba(0,0,0,0.35); max-height: 90vh; overflow-y: auto;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold m-0" style="color:#1a3a5c;">
+                    <i class="fa-solid fa-file-word me-2 text-primary"></i>Hướng dẫn chuyển đổi Word (.docx) sang TXT UTF-8
+                </h4>
+                <button id="btn-close-guide-top" class="btn-close" aria-label="Close"></button>
+            </div>
+            
+            <p class="text-muted small mb-3">
+                * Trợ lý AI của chúng ta cần đọc dữ liệu luật thô chuẩn định dạng văn bản Plain Text (UTF-8) để trích xuất không bị lỗi phông chữ tiếng Việt. Hãy thực hiện 5 bước cực kỳ đơn giản sau đây trong Microsoft Word:
+            </p>
+
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered table-hover align-middle m-0" style="border-radius: 8px; overflow: hidden; font-size: 0.92rem;">
+                    <thead class="bg-navy text-white">
+                        <tr>
+                            <th class="text-center" style="width: 80px; background-color: #1a3a5c;">Bước</th>
+                            <th style="background-color: #1a3a5c;">Thao tác trên Microsoft Word</th>
+                            <th style="background-color: #1a3a5c; width: 220px;">Mục tiêu &amp; Kết quả</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-center fw-bold text-primary">Bước 1</td>
+                            <td>Mở văn bản pháp luật, tài liệu của bạn (file <strong>.doc</strong> hoặc <strong>.docx</strong>) trong phần mềm Microsoft Word.</td>
+                            <td class="text-muted italic">Chuẩn bị văn bản.</td>
+                        </tr>
+                        <tr>
+                            <td class="text-center fw-bold text-primary">Bước 2</td>
+                            <td>Nhấn vào menu <strong>File</strong> ở góc trên cùng bên trái màn hình ➔ Chọn <strong>Save As</strong> (hoặc nhấn trực tiếp phím tắt <strong>F12</strong>).</td>
+                            <td class="text-muted italic">Mở hộp thoại lưu tệp.</td>
+                        </tr>
+                        <tr>
+                            <td class="text-center fw-bold text-primary">Bước 3</td>
+                            <td>Tại ô <strong>Save as type</strong> (Định dạng tệp), hãy chọn định dạng <strong>Plain Text (*.txt)</strong>. Điền tên file tùy ý rồi nhấn <strong>Save</strong>.</td>
+                            <td class="text-muted italic">Đổi định dạng sang tệp văn bản.</td>
+                        </tr>
+                        <tr>
+                            <td class="text-center fw-bold text-primary">Bước 4</td>
+                            <td>Hộp thoại <strong>File Conversion</strong> (Chuyển đổi tệp) sẽ hiện ra. Tích chọn vào mục <strong>Other encoding</strong> ở cột bên phải ➔ Tìm và nhấp chọn <strong>Unicode (UTF-8)</strong> trong danh sách.</td>
+                            <td class="text-success fw-semibold"><i class="fa-solid fa-circle-check"></i> Mã hóa tiếng Việt chuẩn mã UTF-8 (không bị lỗi phông).</td>
+                        </tr>
+                        <tr>
+                            <td class="text-center fw-bold text-primary">Bước 5</td>
+                            <td>Nhấn <strong>OK</strong> để hoàn tất. Bạn đã sở hữu file <strong>.txt</strong> chuẩn mã hóa UTF-8 sẵn sàng nạp trực tiếp vào hệ thống!</td>
+                            <td class="text-primary fw-semibold"><i class="fa-solid fa-flag-checkered"></i> File sẵn sàng sử dụng.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button id="btn-close-guide-bottom" class="btn btn-secondary px-4"><i class="fa-solid fa-circle-xmark me-1"></i>Đóng hướng dẫn</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    document.getElementById('btn-close-guide-top').addEventListener('click', close);
+    document.getElementById('btn-close-guide-bottom').addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 }
 
 // Start app
