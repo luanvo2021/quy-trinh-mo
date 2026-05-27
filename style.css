@@ -59,6 +59,12 @@ body {
     transform: translateY(-2px);
 }
 
+.step-card.selected {
+    border-color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.03);
+    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.1);
+}
+
 .step-card.completed {
     border-color: var(--success-green);
     box-shadow: 0 4px 10px rgba(25, 135, 84, 0.1);

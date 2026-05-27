@@ -78,6 +78,7 @@ let sortBy = "newest";
 let stepsData = [];
 let userProgress = {}; // { "s1-i0": true, ... }
 let collapsedSteps = {}; // { stepId: true/false }
+let selectedSteps = new Set(); // { stepId1, stepId2 }
 let isBypassMode = false;
 let filterResponsible = "ALL";
 let filterAgency = "ALL";
@@ -216,6 +217,7 @@ function enterProject(pId) {
     cleanupProjectListeners();
     currentProjectId = pId;
     collapsedSteps = {}; // Reset collapse state
+    selectedSteps.clear(); // Reset selection state
     const project = projectsList[pId];
     
     // Set Project Title Headers
@@ -490,6 +492,32 @@ function setupEventListeners() {
     });
 
     btnAddStep.addEventListener('click', showAddStepModal);
+    
+    document.getElementById('btn-delete-selected-steps').addEventListener('click', () => {
+        if (selectedSteps.size === 0) return;
+        const confirmed1 = confirm(`⚠️ CẢNH BÁO XÓA NHIỀU BƯỚC!\n\nBạn có thực sự muốn xóa vĩnh viễn ${selectedSteps.size} bước đã chọn?\n\nHành động này sẽ XÓA TOÀN BỘ danh mục Checklist hồ sơ và tiến độ công việc bên trong các bước này TRÊN ĐÁM MÂY (ảnh hưởng đến tất cả đồng nghiệp).\n\nBạn có chắc chắn muốn xóa không?`);
+        if (confirmed1) {
+            const confirmed2 = confirm(`Nhấp OK để xác nhận lần cuối việc xóa vĩnh viễn ${selectedSteps.size} bước.`);
+            if (confirmed2) {
+                const stepIdsToDelete = Array.from(selectedSteps);
+                stepsData = stepsData.filter(s => !stepIdsToDelete.includes(s.step_id));
+                
+                stepIdsToDelete.forEach(stepId => {
+                    Object.keys(userProgress).forEach(key => {
+                        if (key.startsWith(`s${stepId}-`)) {
+                            delete userProgress[key];
+                        }
+                    });
+                });
+                
+                selectedSteps.clear();
+                saveStepsData();
+                saveProgress();
+                populateFilters();
+                render();
+            }
+        }
+    });
 
     selFilterResponsible.addEventListener('change', (e) => {
         filterResponsible = e.target.value;
@@ -601,6 +629,17 @@ function setupEventListeners() {
             const stepId = parseInt(btn.dataset.stepId, 10);
             collapsedSteps[stepId] = !collapsedSteps[stepId];
             render();
+        }
+        
+        if (e.target.closest('.step-select-checkbox')) {
+            const checkbox = e.target.closest('.step-select-checkbox');
+            const stepId = parseInt(checkbox.dataset.stepId, 10);
+            if (checkbox.checked) {
+                selectedSteps.add(stepId);
+            } else {
+                selectedSteps.delete(stepId);
+            }
+            updateDeleteSelectedButton();
         }
     });
 }
@@ -1044,6 +1083,7 @@ function render() {
         const isUnlocked = isBypassMode || stepIndex === 0 || previousStepCompleted;
         const isActive = isUnlocked && !isStepCompleted;
         const isCollapsed = !!collapsedSteps[step.step_id];
+        const isSelected = selectedSteps.has(step.step_id);
 
         if (stepTotalSystem > 0 && visibleItemsInStep === 0 && (filterResponsible !== "ALL" || filterAgency !== "ALL")) {
             previousStepCompleted = isStepCompleted;
@@ -1051,7 +1091,7 @@ function render() {
         }
 
         const card = document.createElement('div');
-        card.className = `step-card ${!isUnlocked ? 'locked' : ''} ${isActive ? 'active' : ''} ${isStepCompleted ? 'completed' : ''} ${isCollapsed ? 'collapsed' : ''}`;
+        card.className = `step-card ${!isUnlocked ? 'locked' : ''} ${isActive ? 'active' : ''} ${isStepCompleted ? 'completed' : ''} ${isCollapsed ? 'collapsed' : ''} ${isSelected ? 'selected' : ''}`;
         card.id = `step-card-${step.step_id}`;
 
         const header = document.createElement('div');
@@ -1060,7 +1100,7 @@ function render() {
             header.style.cursor = 'pointer';
             header.title = "Nhấp để mở/đóng checklist";
             header.onclick = (e) => {
-                if (!e.target.closest('.btn-delete-step')) {
+                if (!e.target.closest('.btn-delete-step') && !e.target.closest('.step-select-checkbox')) {
                     collapsedSteps[step.step_id] = !collapsedSteps[step.step_id];
                     render();
                 }
@@ -1081,19 +1121,18 @@ function render() {
         header.innerHTML = `
             <div class="d-flex flex-column w-100 mb-2 mb-md-0 w-md-auto" style="flex:1;">
                 <h3 class="step-title d-flex align-items-center">
+                    <input type="checkbox" class="form-check-input step-select-checkbox me-2 mt-0" data-step-id="${step.step_id}" ${isSelected ? 'checked' : ''} title="Chọn để xóa bước">
                     ${isUnlocked ? `<button class="btn btn-sm btn-light btn-toggle-collapse p-1 px-2 me-2" data-step-id="${step.step_id}"><i class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i></button>` : ''}
                     ${isStepCompleted ? '<i class="fa-solid fa-check text-success me-2"></i>' : ''}
                     ${step.step_name}
                 </h3>
-                ${step.step_description ? `<p class="step-desc">${step.step_description}</p>` : ''}
+                ${step.step_description ? `<p class="step-desc ms-4">${step.step_description}</p>` : ''}
             </div>
             <div class="d-flex align-items-center gap-3">
                 ${statusHtml}
-                ${isUnlocked ? `
-                <button class="btn btn-sm btn-outline-danger border-0 btn-delete-step p-1" data-step-id="${step.step_id}" data-step-name="${step.step_name}" title="Xóa bước quy trình này" style="line-height:1; display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%;">
+                <button class="btn btn-sm btn-outline-danger border-0 btn-delete-step p-1" data-step-id="${step.step_id}" data-step-name="${step.step_name}" title="Xóa bước quy trình này" style="line-height:1; display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; z-index: 2; position: relative;">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
-                ` : ''}
             </div>
         `;
         card.appendChild(header);
@@ -1263,6 +1302,21 @@ function render() {
     overallProgress.style.width = `${progressPercent}%`;
     overallProgress.setAttribute('aria-valuenow', progressPercent);
     overallProgress.textContent = `${progressPercent}%`;
+
+    updateDeleteSelectedButton();
+}
+
+function updateDeleteSelectedButton() {
+    const btn = document.getElementById('btn-delete-selected-steps');
+    const countSpan = document.getElementById('selected-steps-count');
+    if (!btn || !countSpan) return;
+    
+    if (selectedSteps.size > 0) {
+        btn.style.display = 'inline-block';
+        countSpan.textContent = selectedSteps.size;
+    } else {
+        btn.style.display = 'none';
+    }
 }
 
 // --- ADD CHECKLIST ITEM MODAL ---
