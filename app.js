@@ -1096,16 +1096,15 @@ function render() {
 
         const header = document.createElement('div');
         header.className = 'step-header flex-wrap';
-        if (isUnlocked) {
-            header.style.cursor = 'pointer';
-            header.title = "Nhấp để mở/đóng checklist";
-            header.onclick = (e) => {
-                if (!e.target.closest('.btn-delete-step') && !e.target.closest('.step-select-checkbox')) {
-                    collapsedSteps[step.step_id] = !collapsedSteps[step.step_id];
-                    render();
-                }
-            };
-        }
+        
+        header.style.cursor = 'pointer';
+        header.title = "Nhấp để mở/đóng checklist";
+        header.onclick = (e) => {
+            if (!e.target.closest('.btn-delete-step') && !e.target.closest('.step-select-checkbox')) {
+                collapsedSteps[step.step_id] = !collapsedSteps[step.step_id];
+                render();
+            }
+        };
         
         let statusHtml = '';
         if (!isUnlocked) {
@@ -1122,7 +1121,7 @@ function render() {
             <div class="d-flex flex-column w-100 mb-2 mb-md-0 w-md-auto" style="flex:1;">
                 <h3 class="step-title d-flex align-items-center">
                     <input type="checkbox" class="form-check-input step-select-checkbox me-2 mt-0" data-step-id="${step.step_id}" ${isSelected ? 'checked' : ''} title="Chọn để xóa bước">
-                    ${isUnlocked ? `<button class="btn btn-sm btn-light btn-toggle-collapse p-1 px-2 me-2" data-step-id="${step.step_id}"><i class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i></button>` : ''}
+                    <button class="btn btn-sm btn-light btn-toggle-collapse p-1 px-2 me-2" data-step-id="${step.step_id}"><i class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i></button>
                     ${isStepCompleted ? '<i class="fa-solid fa-check text-success me-2"></i>' : ''}
                     ${step.step_name}
                 </h3>
