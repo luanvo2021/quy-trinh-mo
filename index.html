@@ -34,24 +34,31 @@
             </button>
 
             <div class="collapse navbar-collapse" id="toolbar">
-                <div class="d-flex align-items-center flex-grow-1 mx-lg-4 my-2 my-lg-0">
+                <button class="btn btn-outline-light btn-sm me-3" id="btn-back-to-dashboard" style="display: none;">
+                    <i class="fa-solid fa-chevron-left me-1"></i> Bảng điều khiển
+                </button>
+                
+                <div id="navbar-progress-container" class="d-flex align-items-center flex-grow-1 mx-lg-4 my-2 my-lg-0" style="display: none !important;">
                     <span class="text-white me-2 fw-semibold text-nowrap">Tiến độ:</span>
                     <div class="progress flex-grow-1" style="height: 20px; background-color: rgba(255,255,255,0.2);">
                         <div id="overall-progress" class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-3 ms-auto">
                     <span id="cloud-status" class="badge bg-warning text-dark"><i class="fa-solid fa-cloud-arrow-up"></i> Đang kết nối...</span>
-                    <div class="form-check form-switch text-white m-0 d-flex align-items-center">
-                        <input class="form-check-input me-2 mt-0" type="checkbox" role="switch" id="bypass-switch" style="cursor: pointer; width: 2.5em; height: 1.25em;">
-                        <label class="form-check-label" for="bypass-switch" style="cursor: pointer;">Hiển thị toàn bộ quy trình</label>
-                    </div>
                     
-                    <button class="btn btn-outline-light btn-sm" id="btn-load-data">
-                        <i class="fa-solid fa-file-import me-1"></i> Nạp JSON Quy trình
-                    </button>
-                    <input type="file" id="file-upload" accept=".json" class="d-none">
+                    <div id="navbar-project-actions" class="d-none align-items-center gap-3">
+                        <div class="form-check form-switch text-white m-0 d-flex align-items-center">
+                            <input class="form-check-input me-2 mt-0" type="checkbox" role="switch" id="bypass-switch" style="cursor: pointer; width: 2.5em; height: 1.25em;">
+                            <label class="form-check-label" for="bypass-switch" style="cursor: pointer; text-wrap: nowrap;">Hiển thị toàn bộ</label>
+                        </div>
+                        
+                        <button class="btn btn-outline-light btn-sm" id="btn-load-data" title="Nạp JSON Quy trình">
+                            <i class="fa-solid fa-file-import"></i> Nạp JSON
+                        </button>
+                        <input type="file" id="file-upload" accept=".json" class="d-none">
+                    </div>
                 </div>
             </div>
         </div>
@@ -59,11 +66,89 @@
 
     <!-- Main Content -->
     <div class="container" style="margin-top: 80px; margin-bottom: 50px;">
-        <div class="row justify-content-center">
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboard-view" class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <div>
+                        <h2 class="fw-bold text-navy mb-1"><i class="fa-solid fa-folder-tree me-2"></i>Bảng Điều Khiển Dự Án</h2>
+                        <p class="text-muted mb-0">Quản lý và theo dõi quy trình pháp lý các mỏ khoáng sản</p>
+                    </div>
+                    <button class="btn btn-primary shadow-sm" id="btn-add-project">
+                        <i class="fa-solid fa-circle-plus me-1"></i> Thêm Dự Án Mới
+                    </button>
+                </div>
+
+                <!-- Dashboard Stats -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm p-3 text-white" style="border-radius: 12px; background: linear-gradient(135deg, #1a3a5c, #2a5a8c);">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-white-50 small fw-semibold">Tổng dự án</div>
+                                    <h3 class="fw-bold m-0 mt-1" id="stat-total-projects">0</h3>
+                                </div>
+                                <div class="fs-1 opacity-50"><i class="fa-solid fa-diagram-project"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm p-3 text-white" style="border-radius: 12px; background: linear-gradient(135deg, #198754, #28a745);">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-white-50 small fw-semibold">Đã hoàn thành</div>
+                                    <h3 class="fw-bold m-0 mt-1" id="stat-completed-projects">0</h3>
+                                </div>
+                                <div class="fs-1 opacity-50"><i class="fa-solid fa-circle-check"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm p-3 text-white" style="border-radius: 12px; background: linear-gradient(135deg, #0dcaf0, #0a58ca);">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-white-50 small fw-semibold">Tiến độ trung bình</div>
+                                    <h3 class="fw-bold m-0 mt-1" id="stat-avg-progress">0%</h3>
+                                </div>
+                                <div class="fs-1 opacity-50"><i class="fa-solid fa-chart-line"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search & Filters -->
+                <div class="filter-section p-3 mb-4 bg-white rounded border shadow-sm">
+                    <div class="row align-items-center g-2">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                                <input type="text" id="search-projects" class="form-control border-start-0" placeholder="Tìm kiếm nhanh dự án theo tên hoặc mô tả...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select border-start-0" id="sort-projects">
+                                <option value="newest">Mới nhất trước</option>
+                                <option value="oldest">Cũ nhất trước</option>
+                                <option value="name">Theo tên A-Z</option>
+                                <option value="progress">Tiến độ cao nhất</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects Grid -->
+                <div id="projects-grid" class="row g-3">
+                    <!-- Dynamic project cards will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- PROJECT DETAIL VIEW (HIDDEN BY DEFAULT) -->
+        <div id="project-detail-view" class="row justify-content-center" style="display: none;">
             <div class="col-lg-10">
                 <div class="text-center mb-4">
-                    <h2 class="fw-bold text-navy">HỆ THỐNG CHECKLIST PHÁP LÝ DỰ ÁN KHOÁNG SẢN</h2>
-                    <p class="text-muted">Áp dụng cho mỏ cát/đá theo Luật Địa chất Khoáng sản 2025 và Nghị định 66</p>
+                    <h2 class="fw-bold text-navy" id="detail-project-name">DỰ ÁN KHOÁNG SẢN</h2>
+                    <p class="text-muted" id="detail-project-desc">Mô tả dự án</p>
                 </div>
                 
                 <!-- AI Config Section -->
@@ -109,13 +194,11 @@
                         <div class="col-md-4 mb-2 mb-md-0">
                             <select class="form-select form-select-sm" id="filter-responsible">
                                 <option value="ALL">-- Tất cả bên chịu trách nhiệm --</option>
-                                <!-- Tùy chọn sẽ được sinh tự động bằng JS -->
                             </select>
                         </div>
                         <div class="col-md-4">
                             <select class="form-select form-select-sm" id="filter-agency">
                                 <option value="ALL">-- Tất cả cơ quan tiếp nhận --</option>
-                                <!-- Tùy chọn sẽ được sinh tự động bằng JS -->
                             </select>
                         </div>
                     </div>

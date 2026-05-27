@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, set, update } from "firebase/database";
+import { getDatabase, ref, onValue, set, update, push } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCX2gUFhAaVeJOliOF221a_4C4rJSPprvA",
@@ -16,12 +16,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Firebase References
-const stepsDataRef = ref(db, 'globalProject/stepsData');
-const userProgressRef = ref(db, 'globalProject/userProgress');
-const lawDatabaseRef = ref(db, 'globalProject/lawDatabase');
-
-// --- INITIAL DATA (DUMMY DATA) ---
+// --- INITIAL DATA (DUMMY DATA & TEMPLATE FOR NEW PROJECTS) ---
 const defaultSteps = [
     {
         "step_id": 1,
@@ -69,13 +64,19 @@ const defaultSteps = [
         "step_id": 3,
         "step_name": "Bước 3: Lập ĐTM và đánh giá tác động lòng bờ sông",
         "step_description": "Thực hiện đánh giá tác động môi trường (ĐTM) và các báo cáo đánh giá tác động đến lòng, bờ, bãi sông theo quy định pháp luật.",
-        "checklist": [] // Empty checklist to test AI feature
+        "checklist": []
     }
 ];
 
 // --- APP STATE ---
+let projectsList = {}; // { id: { id, name, description, createdAt, totalItems, completedItems } }
+let currentProjectId = "DASHBOARD"; // "DASHBOARD" or specific projectId
+let searchQuery = "";
+let sortBy = "newest";
+
+// Project specific state (loaded dynamically when entering a project)
 let stepsData = [];
-let userProgress = {}; // Format: { "s1-i0": true, "s1-i1": false, ... }
+let userProgress = {}; // { "s1-i0": true, ... }
 let isBypassMode = false;
 let filterResponsible = "ALL";
 let filterAgency = "ALL";
@@ -83,11 +84,37 @@ let filterAgency = "ALL";
 // AI State
 let LAW_DATABASE = "";
 let uploadedLawFilesCount = 0;
-let geminiApiKey = ""; // Nhập API Key qua giao diện web
+let geminiApiKey = "";
 let geminiModelName = "gemini-2.5-flash";
-let isLoadingAI = null; // Track which step is currently loading
+let isLoadingAI = null; // Track which step is currently loading with AI
+
+// Dynamic unsubscribes for Firebase to prevent leakage
+let unsubscribeSteps = null;
+let unsubscribeProgress = null;
+let unsubscribeLaw = null;
 
 // --- DOM ELEMENTS ---
+// Navigation & Views
+const dashboardView = document.getElementById('dashboard-view');
+const projectDetailView = document.getElementById('project-detail-view');
+const btnBackToDashboard = document.getElementById('btn-back-to-dashboard');
+const navbarProgressContainer = document.getElementById('navbar-progress-container');
+const navbarProjectActions = document.getElementById('navbar-project-actions');
+const cloudStatus = document.getElementById('cloud-status');
+
+// Dashboard Elements
+const btnAddProject = document.getElementById('btn-add-project');
+const projectsGrid = document.getElementById('projects-grid');
+const searchProjectsInput = document.getElementById('search-projects');
+const sortProjectsSelect = document.getElementById('sort-projects');
+
+const statTotalProjects = document.getElementById('stat-total-projects');
+const statCompletedProjects = document.getElementById('stat-completed-projects');
+const statAvgProgress = document.getElementById('stat-avg-progress');
+
+// Project Details Elements
+const detailProjectName = document.getElementById('detail-project-name');
+const detailProjectDesc = document.getElementById('detail-project-desc');
 const stepsContainer = document.getElementById('steps-container');
 const overallProgress = document.getElementById('overall-progress');
 const bypassSwitch = document.getElementById('bypass-switch');
@@ -105,7 +132,6 @@ const btnUploadLaw = document.getElementById('btn-upload-law');
 const btnClearLaw = document.getElementById('btn-clear-law');
 const fileUploadLaw = document.getElementById('file-upload-law');
 const lawStatus = document.getElementById('law-status');
-const cloudStatus = document.getElementById('cloud-status');
 
 // --- INITIALIZATION ---
 function init() {
@@ -114,10 +140,8 @@ function init() {
     initFirebaseListeners();
 }
 
-let isDataLoaded = false;
-let isProgressLoaded = false;
-
 function initFirebaseListeners() {
+    // Cloud Connection Indicator
     const connectedRef = ref(db, ".info/connected");
     onValue(connectedRef, (snap) => {
         if (snap.val() === true) {
@@ -129,7 +153,59 @@ function initFirebaseListeners() {
         }
     });
 
-    onValue(stepsDataRef, (snapshot) => {
+    // Listen to all projects globally
+    const projectsListRef = ref(db, 'projects');
+    onValue(projectsListRef, (snapshot) => {
+        projectsList = snapshot.val() || {};
+        renderDashboard();
+        
+        // Handle routing once initial project list is loaded
+        handleRouting();
+    });
+}
+
+// --- ROUTING ENGINE ---
+function handleRouting() {
+    const hash = window.location.hash;
+    if (hash.startsWith('#project-')) {
+        const pId = hash.replace('#project-', '');
+        if (projectsList[pId]) {
+            enterProject(pId);
+            return;
+        }
+    }
+    // Default back to dashboard
+    exitProject();
+}
+
+function enterProject(pId) {
+    if (currentProjectId === pId && projectDetailView.style.display === 'flex') return;
+
+    cleanupProjectListeners();
+    currentProjectId = pId;
+    const project = projectsList[pId];
+    
+    // Set Project Title Headers
+    detailProjectName.textContent = project.name;
+    detailProjectDesc.textContent = project.description || "Quy trình pháp lý mỏ khoáng sản";
+
+    // Toggle View DOM Elements
+    dashboardView.style.display = 'none';
+    projectDetailView.style.display = 'flex';
+    btnBackToDashboard.style.display = 'inline-block';
+    navbarProgressContainer.style.setProperty('display', 'flex', 'important');
+    navbarProjectActions.style.setProperty('display', 'flex', 'important');
+    navbarProjectActions.classList.remove('d-none');
+
+    // Dynamically Subscribe to project-specific paths
+    const stepsDataRef = ref(db, `projectDetails/${pId}/stepsData`);
+    const userProgressRef = ref(db, `projectDetails/${pId}/userProgress`);
+    const lawDatabaseRef = ref(db, `projectDetails/${pId}/lawDatabase`);
+
+    let isDataLoaded = false;
+    let isProgressLoaded = false;
+
+    unsubscribeSteps = onValue(stepsDataRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
             stepsData = data;
@@ -139,17 +215,16 @@ function initFirebaseListeners() {
         }
         isDataLoaded = true;
         populateFilters();
-        checkAndRender();
+        if (isDataLoaded && isProgressLoaded) render();
     });
 
-    onValue(userProgressRef, (snapshot) => {
-        const data = snapshot.val();
-        userProgress = data || {};
+    unsubscribeProgress = onValue(userProgressRef, (snapshot) => {
+        userProgress = snapshot.val() || {};
         isProgressLoaded = true;
-        checkAndRender();
+        if (isDataLoaded && isProgressLoaded) render();
     });
 
-    onValue(lawDatabaseRef, (snapshot) => {
+    unsubscribeLaw = onValue(lawDatabaseRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
             LAW_DATABASE = data.text || "";
@@ -161,31 +236,87 @@ function initFirebaseListeners() {
                 lawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: 0 file`;
                 lawStatus.classList.replace('bg-success', 'bg-secondary');
             }
+        } else {
+            LAW_DATABASE = "";
+            uploadedLawFilesCount = 0;
+            lawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: 0 file`;
+            lawStatus.classList.replace('bg-success', 'bg-secondary');
         }
     });
 }
 
-function checkAndRender() {
-    if (isDataLoaded && isProgressLoaded) {
-        render();
+function exitProject() {
+    cleanupProjectListeners();
+    currentProjectId = "DASHBOARD";
+
+    // Toggle View DOM Elements
+    dashboardView.style.display = 'flex';
+    projectDetailView.style.display = 'none';
+    btnBackToDashboard.style.display = 'none';
+    navbarProgressContainer.style.setProperty('display', 'none', 'important');
+    navbarProjectActions.style.setProperty('display', 'none', 'important');
+    navbarProjectActions.classList.add('d-none');
+
+    if (window.location.hash !== '#dashboard' && window.location.hash !== '') {
+        window.location.hash = '#dashboard';
     }
+
+    renderDashboard();
 }
 
+function cleanupProjectListeners() {
+    if (unsubscribeSteps) { unsubscribeSteps(); unsubscribeSteps = null; }
+    if (unsubscribeProgress) { unsubscribeProgress(); unsubscribeProgress = null; }
+    if (unsubscribeLaw) { unsubscribeLaw(); unsubscribeLaw = null; }
+}
+
+// --- PROJECT METRIC / STATS WRITER ---
+function updateProjectStats() {
+    if (currentProjectId === "DASHBOARD") return;
+    
+    let totalItems = 0;
+    let completedItems = 0;
+    
+    stepsData.forEach(step => {
+        step.checklist.forEach((item, itemIndex) => {
+            totalItems++;
+            const itemId = `s${step.step_id}-i${itemIndex}`;
+            if (userProgress[itemId]) {
+                completedItems++;
+            }
+        });
+    });
+    
+    const projectMetaRef = ref(db, `projects/${currentProjectId}`);
+    update(projectMetaRef, {
+        totalItems: totalItems,
+        completedItems: completedItems
+    });
+}
+
+// --- PROJECT SAVES ---
 function saveStepsData() {
-    set(stepsDataRef, stepsData);
+    if (currentProjectId === "DASHBOARD") return;
+    const stepsDataRef = ref(db, `projectDetails/${currentProjectId}/stepsData`);
+    set(stepsDataRef, stepsData).then(() => {
+        updateProjectStats();
+    });
 }
 
 function saveProgress() {
-    set(userProgressRef, userProgress);
+    if (currentProjectId === "DASHBOARD") return;
+    const userProgressRef = ref(db, `projectDetails/${currentProjectId}/userProgress`);
+    set(userProgressRef, userProgress).then(() => {
+        updateProjectStats();
+    });
 }
 
+// --- LOAD CONFIG ---
 function loadAiConfig() {
     const savedKey = localStorage.getItem('geminiApiKey');
     if (savedKey) {
         geminiApiKey = savedKey;
         inputApiKey.value = savedKey;
-    } else {
-        inputApiKey.value = geminiApiKey; // Show default hardcoded key
     }
     
     let savedModel = localStorage.getItem('geminiModelName');
@@ -199,38 +330,26 @@ function loadAiConfig() {
     }
 }
 
-function populateFilters() {
-    const agencies = new Set();
-    const responsibles = new Set();
-    
-    stepsData.forEach(step => {
-        step.checklist.forEach(item => {
-            if (item.agency) agencies.add(item.agency.trim());
-            if (item.responsible) responsibles.add(item.responsible.trim());
-        });
-    });
-    
-    // Populate Agency Filter
-    selFilterAgency.innerHTML = '<option value="ALL">-- Tất cả cơ quan tiếp nhận --</option>';
-    Array.from(agencies).sort().forEach(agency => {
-        const option = document.createElement('option');
-        option.value = agency;
-        option.textContent = agency;
-        selFilterAgency.appendChild(option);
-    });
-    
-    // Populate Responsible Filter
-    selFilterResponsible.innerHTML = '<option value="ALL">-- Tất cả bên chịu trách nhiệm --</option>';
-    Array.from(responsibles).sort().forEach(resp => {
-        const option = document.createElement('option');
-        option.value = resp;
-        option.textContent = resp;
-        selFilterResponsible.appendChild(option);
-    });
-}
-
+// --- EVENT LISTENERS ---
 function setupEventListeners() {
-    // Basic Events
+    // Hash Routing Listener
+    window.addEventListener('hashchange', handleRouting);
+
+    // Dashboard View events
+    btnAddProject.addEventListener('click', showAddProjectModal);
+    btnBackToDashboard.addEventListener('click', () => { window.location.hash = '#dashboard'; });
+    
+    searchProjectsInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        renderDashboard();
+    });
+    
+    sortProjectsSelect.addEventListener('change', (e) => {
+        sortBy = e.target.value;
+        renderDashboard();
+    });
+
+    // Project View events
     bypassSwitch.addEventListener('change', (e) => {
         isBypassMode = e.target.checked;
         render();
@@ -249,7 +368,7 @@ function setupEventListeners() {
             try {
                 const newData = JSON.parse(event.target.result);
                 if (Array.isArray(newData)) {
-                    // Tự động chuyển đổi tên cơ quan cũ nếu có trong file upload
+                    // Normalize legacy agency titles
                     newData.forEach(step => {
                         if (step.checklist) {
                             step.checklist.forEach(item => {
@@ -284,7 +403,7 @@ function setupEventListeners() {
     });
 
     btnReset.addEventListener('click', () => {
-        if (confirm("Bạn có chắc chắn muốn đặt lại toàn bộ tiến độ (ảnh hưởng đến tất cả những người đang xem)?")) {
+        if (confirm("Bạn có chắc chắn muốn đặt lại toàn bộ tiến độ dự án này (ảnh hưởng đến tất cả các thành viên đang cùng xem)?")) {
             userProgress = {};
             saveProgress();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -343,27 +462,26 @@ function setupEventListeners() {
         lawStatus.classList.replace('bg-secondary', 'bg-success');
         
         try {
-            // Đẩy kho luật lên Cloud để đồng nghiệp cũng thấy
-            set(lawDatabaseRef, { text: LAW_DATABASE, count: uploadedLawFilesCount });
-            
-            // Fallback lưu ở local cho an toàn
-            localStorage.setItem('LAW_DATABASE', LAW_DATABASE);
-            localStorage.setItem('uploadedLawFilesCount', uploadedLawFilesCount.toString());
+            if (currentProjectId !== "DASHBOARD") {
+                const lawDatabaseRef = ref(db, `projectDetails/${currentProjectId}/lawDatabase`);
+                set(lawDatabaseRef, { text: LAW_DATABASE, count: uploadedLawFilesCount });
+            }
         } catch (err) {
             console.error("Lỗi khi lưu kho luật:", err);
             alert("Cảnh báo: Kho luật của bạn có thể quá lớn. Đã lưu ở máy cá nhân nhưng có thể không đồng bộ được sang máy đồng nghiệp.");
         }
         
-        fileUploadLaw.value = ''; // reset
+        fileUploadLaw.value = '';
     });
 
     btnClearLaw.addEventListener('click', () => {
-        if (confirm("Bạn có chắc chắn muốn xóa toàn bộ kho dữ liệu luật (ảnh hưởng đến tất cả những người đang xem) không?")) {
+        if (confirm("Bạn có chắc chắn muốn xóa toàn bộ kho dữ liệu luật của dự án này không?")) {
             LAW_DATABASE = "";
             uploadedLawFilesCount = 0;
-            set(lawDatabaseRef, { text: "", count: 0 });
-            localStorage.removeItem('LAW_DATABASE');
-            localStorage.removeItem('uploadedLawFilesCount');
+            if (currentProjectId !== "DASHBOARD") {
+                const lawDatabaseRef = ref(db, `projectDetails/${currentProjectId}/lawDatabase`);
+                set(lawDatabaseRef, { text: "", count: 0 });
+            }
             lawStatus.innerHTML = `<i class="fa-solid fa-database me-1"></i> Dữ liệu luật: 0 file`;
             lawStatus.classList.replace('bg-success', 'bg-secondary');
             alert("Đã xóa dữ liệu luật thành công.");
@@ -380,7 +498,217 @@ function setupEventListeners() {
     });
 }
 
-// Helper to get badge class for responsible party
+// --- ADD PROJECT MODAL ---
+function showAddProjectModal() {
+    const existing = document.getElementById('add-project-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'add-project-modal';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center; padding: 1rem;
+    `;
+    modal.innerHTML = `
+        <div style="background:#fff; border-radius:16px; padding:2rem; width:100%; max-width:520px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <h5 class="fw-bold mb-4" style="color:#1a3a5c;">
+                <i class="fa-solid fa-circle-plus me-2 text-primary"></i>Tạo Dự Án Mới
+            </h5>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Tên dự án <span class="text-danger">*</span></label>
+                <input type="text" id="proj-name" class="form-control" placeholder="VD: Mỏ cát Sông Đồng Nai - Thuận Phong">
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Mô tả ngắn gọn về dự án</label>
+                <textarea id="proj-desc" class="form-control" rows="3" placeholder="VD: Địa điểm khai thác, quy mô công suất, thời hạn khai thác..."></textarea>
+            </div>
+            <div class="d-flex gap-2 justify-content-end">
+                <button id="btn-cancel-proj" class="btn btn-outline-secondary">Hủy</button>
+                <button id="btn-confirm-proj" class="btn btn-primary px-4"><i class="fa-solid fa-circle-check me-1"></i>Tạo dự án</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    setTimeout(() => document.getElementById('proj-name').focus(), 100);
+
+    document.getElementById('btn-cancel-proj').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    document.getElementById('btn-confirm-proj').addEventListener('click', () => {
+        const name = document.getElementById('proj-name').value.trim();
+        if (!name) {
+            document.getElementById('proj-name').classList.add('is-invalid');
+            return;
+        }
+        const desc = document.getElementById('proj-desc').value.trim() || '';
+        
+        // Generate dynamic project key
+        const newProjRef = push(ref(db, 'projects'));
+        const newProjId = newProjRef.key;
+        
+        const newProjMeta = {
+            id: newProjId,
+            name: name,
+            description: desc,
+            createdAt: Date.now(),
+            totalItems: 4, // standard default template has 4 total items
+            completedItems: 0
+        };
+        
+        const newProjDetails = {
+            stepsData: defaultSteps,
+            userProgress: {},
+            lawDatabase: { text: "", count: 0 }
+        };
+        
+        const updates = {};
+        updates[`projects/${newProjId}`] = newProjMeta;
+        updates[`projectDetails/${newProjId}`] = newProjDetails;
+        
+        update(ref(db), updates).then(() => {
+            modal.remove();
+            window.location.hash = `#project-${newProjId}`;
+        }).catch(err => {
+            alert("Lỗi tạo dự án: " + err.message);
+        });
+    });
+}
+
+// --- DELETE PROJECT ---
+function deleteProject(projectId) {
+    const updates = {};
+    updates[`projects/${projectId}`] = null;
+    updates[`projectDetails/${projectId}`] = null;
+    
+    update(ref(db), updates).then(() => {
+        alert("Đã xóa dự án thành công.");
+        if (currentProjectId === projectId) {
+            window.location.hash = "#dashboard";
+        }
+    }).catch(err => {
+        alert("Lỗi khi xóa dự án: " + err.message);
+    });
+}
+
+// --- RENDER DASHBOARD (GRID VIEW) ---
+function renderDashboard() {
+    projectsGrid.innerHTML = '';
+    
+    const projectsArray = Object.values(projectsList);
+    
+    // Search Query Filter
+    const query = searchQuery.trim().toLowerCase();
+    const filteredProjects = projectsArray.filter(project => {
+        return project.name.toLowerCase().includes(query) || 
+               (project.description && project.description.toLowerCase().includes(query));
+    });
+    
+    // Sort logic
+    filteredProjects.sort((a, b) => {
+        if (sortBy === "newest") return b.createdAt - a.createdAt;
+        if (sortBy === "oldest") return a.createdAt - b.createdAt;
+        if (sortBy === "name") return a.name.localeCompare(b.name);
+        if (sortBy === "progress") {
+            const progressA = a.totalItems > 0 ? (a.completedItems / a.totalItems) : 0;
+            const progressB = b.totalItems > 0 ? (b.completedItems / b.totalItems) : 0;
+            return progressB - progressA;
+        }
+        return 0;
+    });
+    
+    // Dashboard Stats Calculation
+    const totalProjects = projectsArray.length;
+    const completedProjects = projectsArray.filter(p => p.totalItems > 0 && p.completedItems === p.totalItems).length;
+    
+    let sumProgress = 0;
+    projectsArray.forEach(p => {
+        if (p.totalItems > 0) {
+            sumProgress += (p.completedItems / p.totalItems);
+        }
+    });
+    const avgProgress = totalProjects > 0 ? Math.round((sumProgress / totalProjects) * 100) : 0;
+    
+    statTotalProjects.textContent = totalProjects;
+    statCompletedProjects.textContent = completedProjects;
+    statAvgProgress.textContent = `${avgProgress}%`;
+    
+    if (filteredProjects.length === 0) {
+        projectsGrid.innerHTML = `
+            <div class="col-12 text-center p-5 text-muted">
+                <i class="fa-solid fa-magnifying-glass fs-1 mb-3 text-secondary"></i>
+                <h5>Không tìm thấy dự án nào</h5>
+                <p>Thử tìm kiếm với từ khóa khác hoặc tạo dự án mới.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    filteredProjects.forEach(project => {
+        const total = project.totalItems || 0;
+        const completed = project.completedItems || 0;
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const dateStr = new Date(project.createdAt).toLocaleDateString('vi-VN');
+        
+        const cardCol = document.createElement('div');
+        cardCol.className = 'col-md-6 col-lg-4 mb-4';
+        
+        cardCol.innerHTML = `
+            <div class="project-card shadow-sm h-100" style="cursor: pointer;">
+                <button class="project-card-delete" title="Xóa dự án" data-project-id="${project.id}" data-project-name="${project.name}">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+                <div class="card-body">
+                    <h5 class="project-card-title">${project.name}</h5>
+                    <p class="project-card-desc">${project.description || 'Không có mô tả dự án...'}</p>
+                    
+                    <div class="project-card-meta">
+                        <div class="project-progress-label">
+                            <span>Tiến độ</span>
+                            <span>${percent}% (${completed}/${total} mục)</span>
+                        </div>
+                        <div class="progress" style="height: 8px; border-radius: 4px; background-color:#e9ecef;">
+                            <div class="progress-bar bg-success" style="width: ${percent}%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-3 text-muted" style="font-size:0.75rem;">
+                            <span><i class="fa-solid fa-calendar-day me-1"></i>${dateStr}</span>
+                            <span class="badge ${percent === 100 ? 'badge-completed-projects' : 'badge-pending-projects'}">
+                                ${percent === 100 ? 'Hoàn thành' : 'Đang xử lý'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Navigate on card click
+        cardCol.querySelector('.project-card').addEventListener('click', (e) => {
+            if (e.target.closest('.project-card-delete')) return;
+            window.location.hash = `#project-${project.id}`;
+        });
+        
+        // Double-check Delete handler
+        cardCol.querySelector('.project-card-delete').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const projectId = e.currentTarget.dataset.projectId;
+            const projectName = e.currentTarget.dataset.projectName;
+            
+            const confirmed1 = confirm(`⚠️ CẢNH BÁO CỰC KỲ QUAN TRỌNG!\n\nBạn đang chuẩn bị xóa vĩnh viễn dự án:\n"${projectName}"\n\nHành động này sẽ XÓA HẾT quy trình, checklist, tiến độ và kho dữ liệu luật của dự án này TRÊN ĐÁM MÂY (ảnh hưởng đến tất cả đồng nghiệp).\n\nBạn có thực sự muốn xóa?`);
+            if (confirmed1) {
+                const confirmed2 = confirm(`Nhấp OK để xác nhận lần cuối hành động xóa dự án "${projectName}".`);
+                if (confirmed2) {
+                    deleteProject(projectId);
+                }
+            }
+        });
+        
+        projectsGrid.appendChild(cardCol);
+    });
+}
+
+// --- HELPER FOR ROLES COLORS ---
 function getResponsibleBadgeClass(role) {
     if (!role) return 'bg-secondary text-white';
     const lowerRole = role.toLowerCase();
@@ -388,7 +716,6 @@ function getResponsibleBadgeClass(role) {
     if (lowerRole.includes('chủ đầu tư') || lowerRole.includes('đối tác')) return 'badge-investor';
     if (lowerRole.includes('phối hợp')) return 'badge-coord';
     
-    // Dynamic fallback for unknown roles
     const colors = ['badge-company', 'badge-investor', 'badge-coord', 'bg-info text-dark', 'bg-dark text-white'];
     let hash = 0;
     for (let i = 0; i < role.length; i++) hash = role.charCodeAt(i) + ((hash << 5) - hash);
@@ -399,17 +726,14 @@ function getResponsibleBadgeClass(role) {
 function retrieveRelevantContext(query, text, maxChars = 150000) {
     if (text.length <= maxChars) return text;
     
-    // Trích xuất từ khóa từ query (hỗ trợ tiếng Việt)
     const normalizedQuery = query.toLowerCase().replace(/[^a-z0-9áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]/g, ' ');
     const keywords = normalizedQuery.split(' ').filter(k => k.length > 2);
     
-    // Chia nhỏ văn bản (theo Điều luật hoặc theo đoạn văn)
     let chunks = text.split(/(?=\n\nĐiều \d+\.)/gi);
     if (chunks.length < 10) {
         chunks = text.split(/\n\n/);
     }
     
-    // Chấm điểm từng đoạn văn bản
     const scoredChunks = chunks.map(chunk => {
         let score = 0;
         const chunkLower = chunk.toLowerCase();
@@ -419,10 +743,8 @@ function retrieveRelevantContext(query, text, maxChars = 150000) {
         return { chunk, score };
     });
     
-    // Sắp xếp các đoạn có điểm cao (chứa nhiều từ khóa liên quan) lên đầu
     scoredChunks.sort((a, b) => b.score - a.score);
     
-    // Gom các đoạn lại cho đến khi đạt giới hạn ký tự (maxChars)
     let result = "";
     for (const item of scoredChunks) {
         if (item.score > 0 || result.length < 20000) {
@@ -433,7 +755,7 @@ function retrieveRelevantContext(query, text, maxChars = 150000) {
     return result || text.substring(0, maxChars);
 }
 
-// --- AI LOGIC ---
+// --- AI CHEKLIST EXTRACTOR ---
 async function extractChecklistWithAI(stepId) {
     if (!geminiApiKey) {
         alert("Vui lòng nhập Gemini API Key ở thanh công cụ phía trên trước khi sử dụng tính năng này!");
@@ -448,7 +770,6 @@ async function extractChecklistWithAI(stepId) {
     if (stepIndex === -1) return;
     const stepData = stepsData[stepIndex];
 
-    // Cảnh báo nếu checklist đã có dữ liệu
     if (stepData.checklist && stepData.checklist.length > 0) {
         const confirmed = confirm(
             `⚠️ Cảnh báo!\n\nBước "${stepData.step_name}" đã có ${stepData.checklist.length} mục hồ sơ.\n\nNếu tiếp tục, AI sẽ XÓA TOÀN BỘ nội dung cũ và tạo checklist MỚI (ảnh hưởng đến tất cả mọi người trong nhóm).\n\nBạn có chắc muốn tạo lại không?`
@@ -456,16 +777,14 @@ async function extractChecklistWithAI(stepId) {
         if (!confirmed) return;
     }
 
-    // Set Loading State
     isLoadingAI = stepId;
     render();
-
 
     try {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
         
         const query = stepData.step_name + " " + (stepData.step_description || "");
-        const relevantLawContext = retrieveRelevantContext(query, LAW_DATABASE, 120000); // ~30k tokens
+        const relevantLawContext = retrieveRelevantContext(query, LAW_DATABASE, 120000);
         
         const prompt = `MỤC TIÊU: Bạn là một trợ lý pháp lý chuyên nghiệp về ngành địa chất, khoáng sản, thủy lợi tại Việt Nam.
 NGỮ CẢNH DỰ ÁN: Dự án hiện tại đang ở giai đoạn: ${stepData.step_name} với mô tả: ${stepData.step_description || "Không có"}.
@@ -500,18 +819,15 @@ YÊU CẦU: Hãy quét toàn bộ kho văn bản pháp luật đầu vào, tìm 
         }
         
         let text = result.response.text();
-        
-        // Clean JSON markdown blocks if any
         text = text.replace(/```json/g, "").replace(/```/g, "").trim();
         
         const checklist = JSON.parse(text);
         
         if (Array.isArray(checklist)) {
-            // Update the step with new checklist
             stepsData[stepIndex].checklist = checklist;
             saveStepsData();
             
-            // Clean up old progress for this step to avoid ghost checked items
+            // Clear progress indicators for deleted shifts
             Object.keys(userProgress).forEach(key => {
                 if (key.startsWith(`s${stepId}-`)) {
                     delete userProgress[key];
@@ -532,22 +848,47 @@ YÊU CẦU: Hãy quét toàn bộ kho văn bản pháp luật đầu vào, tìm 
     }
 }
 
-// --- RENDER LOGIC ---
+// --- POPULATE FILTERS ---
+function populateFilters() {
+    const agencies = new Set();
+    const responsibles = new Set();
+    
+    stepsData.forEach(step => {
+        step.checklist.forEach(item => {
+            if (item.agency) agencies.add(item.agency.trim());
+            if (item.responsible) responsibles.add(item.responsible.trim());
+        });
+    });
+    
+    selFilterAgency.innerHTML = '<option value="ALL">-- Tất cả cơ quan tiếp nhận --</option>';
+    Array.from(agencies).sort().forEach(agency => {
+        const option = document.createElement('option');
+        option.value = agency;
+        option.textContent = agency;
+        selFilterAgency.appendChild(option);
+    });
+    
+    selFilterResponsible.innerHTML = '<option value="ALL">-- Tất cả bên chịu trách nhiệm --</option>';
+    Array.from(responsibles).sort().forEach(resp => {
+        const option = document.createElement('option');
+        option.value = resp;
+        option.textContent = resp;
+        selFilterResponsible.appendChild(option);
+    });
+}
+
+// --- RENDER DETAIL PROJECT VIEW ---
 function render() {
     stepsContainer.innerHTML = '';
     
-    // Variables for overall progress (ignores filters)
     let totalItemsSystem = 0;
     let completedItemsSystem = 0;
-
-    let previousStepCompleted = true; // For unlock mechanism
+    let previousStepCompleted = true;
 
     stepsData.forEach((step, stepIndex) => {
-        // Calculate step progress (ignores filters for logic lock/unlock)
         let stepTotalSystem = step.checklist.length;
         let stepCompletedSystem = 0;
-        
-        let visibleItemsInStep = 0; // To hide step if all items are filtered out
+        let visibleItemsInStep = 0;
 
         step.checklist.forEach((item, itemIndex) => {
             const itemId = `s${step.step_id}-i${itemIndex}`;
@@ -557,7 +898,6 @@ function render() {
                 completedItemsSystem++;
             }
             
-            // Check visibility for filter
             const matchResp = filterResponsible === "ALL" || (item.responsible && item.responsible === filterResponsible);
             const matchAgency = filterAgency === "ALL" || (item.agency && item.agency === filterAgency);
             if (matchResp && matchAgency) {
@@ -565,27 +905,19 @@ function render() {
             }
         });
 
-        let isStepCompleted = (stepCompletedSystem === stepTotalSystem && stepTotalSystem > 0);
-        
-        // Determine lock status: unlocked if Bypass, or first step, or previous step completed
-        let isUnlocked = isBypassMode || stepIndex === 0 || previousStepCompleted;
-        
-        // Determine active status
-        let isActive = isUnlocked && !isStepCompleted;
+        const isStepCompleted = (stepCompletedSystem === stepTotalSystem && stepTotalSystem > 0);
+        const isUnlocked = isBypassMode || stepIndex === 0 || previousStepCompleted;
+        const isActive = isUnlocked && !isStepCompleted;
 
-        // Skip rendering this step if filters hid all its items and it's not empty, 
-        // UNLESS it's empty, then we might want to show it so they can click AI Extract
         if (stepTotalSystem > 0 && visibleItemsInStep === 0 && (filterResponsible !== "ALL" || filterAgency !== "ALL")) {
             previousStepCompleted = isStepCompleted;
             return; 
         }
 
-        // Render Step Card
         const card = document.createElement('div');
         card.className = `step-card ${!isUnlocked ? 'locked' : ''} ${isActive ? 'active' : ''} ${isStepCompleted ? 'completed' : ''}`;
         card.id = `step-card-${step.step_id}`;
 
-        // Header
         const header = document.createElement('div');
         header.className = 'step-header flex-wrap';
         
@@ -614,7 +946,6 @@ function render() {
         `;
         card.appendChild(header);
         
-        // AI Extract Section (Visible if unlocked)
         if (isUnlocked) {
             const aiArea = document.createElement('div');
             aiArea.className = 'ai-extract-area d-flex justify-content-between align-items-center flex-wrap';
@@ -647,7 +978,6 @@ function render() {
             card.appendChild(aiArea);
         }
 
-        // Body (Checklist Items)
         const body = document.createElement('div');
         body.className = 'card-body p-0';
 
@@ -656,7 +986,6 @@ function render() {
                 const itemId = `s${step.step_id}-i${itemIndex}`;
                 const isChecked = !!userProgress[itemId];
                 
-                // Apply Filters
                 const matchResp = filterResponsible === "ALL" || (item.responsible && item.responsible === filterResponsible);
                 const matchAgency = filterAgency === "ALL" || (item.agency && item.agency === filterAgency);
                 
@@ -697,13 +1026,11 @@ function render() {
                     </div>
                 `;
                 
-                // Event listener for checkbox
                 const checkbox = itemDiv.querySelector('input[type="checkbox"]');
                 checkbox.addEventListener('change', (e) => {
                     userProgress[itemId] = e.target.checked;
                     saveProgress();
                     
-                    // Recalculate step completion for auto-scroll logic
                     const currentStepCompletedCount = step.checklist.filter((_, idx) => userProgress[`s${step.step_id}-i${idx}`]).length;
                     const newStepCompleted = currentStepCompletedCount === stepTotalSystem;
                     
@@ -724,7 +1051,6 @@ function render() {
                     }
                 });
 
-                // Hover effect for delete button
                 const delBtn = itemDiv.querySelector('.btn-delete-item');
                 if (delBtn) {
                     itemDiv.addEventListener('mouseenter', () => delBtn.style.opacity = '1');
@@ -736,7 +1062,6 @@ function render() {
                         if (confirm(`Xóa mục này khỏi danh sách?\n"${step.checklist[iIdx]?.doc_name}"`)) {
                             const targetStep = stepsData.find(s => s.step_id === sId);
                             if (targetStep) {
-                                // Also clear progress for items that shift index
                                 Object.keys(userProgress).forEach(key => {
                                     if (key.startsWith(`s${sId}-`)) delete userProgress[key];
                                 });
@@ -753,7 +1078,6 @@ function render() {
             });
         }
 
-        // --- ADD ITEM BUTTON ---
         if (isUnlocked) {
             const addRow = document.createElement('div');
             addRow.className = 'add-item-row p-2 px-3';
@@ -770,18 +1094,12 @@ function render() {
         
         card.appendChild(body);
         
-        // Lock Overlay
         const overlay = document.createElement('div');
         overlay.className = 'lock-overlay';
         overlay.innerHTML = `<div class="lock-icon"><i class="fa-solid fa-lock"></i></div>`;
         card.appendChild(overlay);
 
         stepsContainer.appendChild(card);
-
-        // Update previousStepCompleted for the next iteration
-        // A step with 0 items is technically considered completed if we don't want to block progress,
-        // BUT it's better to lock until AI generates it, or consider it uncompleted.
-        // Let's say if totalItems === 0, it's not completed, to force AI generation.
         previousStepCompleted = isStepCompleted && stepTotalSystem > 0;
     });
     
@@ -795,12 +1113,8 @@ function render() {
     overallProgress.textContent = `${progressPercent}%`;
 }
 
-// Start app
-document.addEventListener('DOMContentLoaded', init);
-
-// --- ADD ITEM MODAL ---
+// --- ADD CHECKLIST ITEM MODAL ---
 function showAddItemModal(stepId) {
-    // Remove existing modal if any
     const existing = document.getElementById('add-item-modal');
     if (existing) existing.remove();
 
@@ -845,14 +1159,11 @@ function showAddItemModal(stepId) {
 
     document.body.appendChild(modal);
 
-    // Focus first field
     setTimeout(() => document.getElementById('add-doc-name').focus(), 100);
 
-    // Cancel
     document.getElementById('btn-cancel-add').addEventListener('click', () => modal.remove());
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 
-    // Confirm
     document.getElementById('btn-confirm-add').addEventListener('click', () => {
         const docName = document.getElementById('add-doc-name').value.trim();
         if (!docName) {
@@ -877,3 +1188,5 @@ function showAddItemModal(stepId) {
     });
 }
 
+// Start app
+document.addEventListener('DOMContentLoaded', init);
